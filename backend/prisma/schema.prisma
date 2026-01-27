@@ -1,14 +1,226 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  password String
+  firstName String
+  lastName String
+  phoneNumber String?
+  role Role @default(PATIENT)
+  profileImage String?
+  
+  // Authentication
+  refreshTokens RefreshToken[]
+  
+  // Profile (role-specific)
+  patientProfile PatientProfile?
+  doctorProfile DoctorProfile?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([email])
+  @@index([role])
+}
+
+enum Role {
+  PATIENT
+  DOCTOR
+}
+
+model PatientProfile {
+  userId String @id
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Medical Information
+  bloodType BloodType? // A+, A-, B+, B-, AB+, AB-, O+, O-
+  allergies String? // Comma-separated or JSON array
+  medicalHistory String? // Past surgeries, treatments, chronic conditions
+  
+  // Emergency Contact
+  emergencyContactName String?
+  emergencyContactPhone String?
+  
+  // Relations
+  appointmentsAsPatient Appointment[] @relation("PatientAppointments")
+  ratingsGiven Rating[] @relation("PatientRatings")
+  medicalReports MedicalReport[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum BloodType{
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  AB_POS
+  AB_NEG
+  O_POS
+  O_NEG
+}
+
+model DoctorProfile {
+  userId String @id
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  bio String?
+  experience Int? // Years of experience
+  qualification String?
+  consultationFee Float @default(500)
+  
+  // Availability slots
+  availability Availability[]
+  
+  // Relations
+  appointmentsAsDoctor Appointment[] @relation("DoctorAppointments")
+  ratingsReceived Rating[] @relation("DoctorRatings")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Availability {
+  id String @id @default(cuid())
+  doctorId String
+  doctor DoctorProfile @relation(fields: [doctorId], references: [userId], onDelete: Cascade)
+  
+  dayOfWeek Int // 0 = Sunday, 6 = Saturday
+  startTime String //hh:mm
+  endTime String   //hh:mm
+  isActive Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([doctorId, dayOfWeek, startTime])
+  @@index([doctorId])
+}
+
+model Appointment {
+  id String @id @default(cuid())
+  
+  patientId String
+  patient PatientProfile @relation("PatientAppointments", fields: [patientId], references: [userId], onDelete: Cascade)
+  
+  doctorId String
+  doctor DoctorProfile @relation("DoctorAppointments", fields: [doctorId], references: [userId], onDelete: Cascade)
+  
+  appointmentStart DateTime
+  durationMinutes Int @default(30)
+  
+  status AppointmentStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(NOT_INITIATED)
+  
+  // Medical information
+  medicalReports MedicalReport[]
+  
+  // Payment
+  stripePaymentIntentId String?
+  paymentExpiryTime DateTime?
+
+  rating Rating?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([appointmentStart])
+}
+
+enum AppointmentStatus {
+  PENDING // Doctor hasn't responded
+  APPROVED // Doctor approved, waiting for payment
+  REJECTED // Doctor rejected
+  CONFIRMED // Payment done
+  COMPLETED // Appointment happened
+}
+
+enum PaymentStatus {
+  NOT_INITIATED
+  PENDING // Payment session created
+  COMPLETED // Payment received
+  FAILED
+}
+
+model MedicalReport {
+  id String @id @default(cuid())
+  
+  appointmentId String
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  
+  patientId String // Patient who owns this report
+  patient PatientProfile @relation(fields: [patientId], references: [userId], onDelete: Cascade)
+  
+  fileName String
+  fileUrl String
+  fileType String
+  fileSize Int
+    
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([appointmentId])
+  @@index([patientId])
+}
+
+model Rating {
+  id String @id @default(cuid())
+  
+  appointmentId String @unique
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  
+  patientId String
+  patient PatientProfile @relation("PatientRatings", fields: [patientId], references: [userId], onDelete: Cascade)
+  
+  doctorId String
+  doctor DoctorProfile @relation("DoctorRatings", fields: [doctorId], references: [userId], onDelete: Cascade)
+  
+  rating Int // 1-5
+  review String?
+  isModerated Boolean @default(false)
+  isApproved Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([doctorId])
+  @@index([patientId])
+}
+
+model RefreshToken {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  token String @unique
+  expiresAt DateTime
+  isRevoked Boolean @default(false)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id String @id @default(cuid())
+  email String
+  token String @unique
+  expiresAt DateTime
+  isUsed Boolean @default(false)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([email])
 }
