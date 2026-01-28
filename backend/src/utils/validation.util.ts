@@ -1,27 +1,28 @@
 import { Request, Response, NextFunction } from 'express';
+import { REGEX } from '../constants/regex.constants';
 
 // Validation utility functions
 export const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = REGEX.EMAIL;
   return emailRegex.test(email);
 };
 
 export const validatePassword = (password: string): boolean => {
   // Password must be at least 8 characters with at least 1 uppercase, 1 lowercase, 1 number, and 1 special character
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  const passwordRegex = REGEX.PASSWORD;
   return passwordRegex.test(password);
 };
 
 export const validateName = (name: string): boolean => {
   // Name must contain only alphabetic characters and be at least 2 characters
-  const nameRegex = /^[A-Za-z]{2,}$/;
+  const nameRegex = REGEX.NAME;
   return nameRegex.test(name);
 };
 
 export const validatePhoneNumber = (phone: string): boolean => {
   if (!phone) return true; // Phone is optional
-  // Phone number must be 10-15 digits
-  const phoneRegex = /^\+?(\d{10}|\d{11}|\d{12}|\d{13}|\d{14}|\d{15})$/;
+  // Phone number must be 10 digits
+  const phoneRegex = REGEX.PHONE;
   return phoneRegex.test(phone);
 };
 

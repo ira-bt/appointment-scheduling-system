@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/auth/auth.context';
 import { getErrorMessage } from '@/src/utils/api-error';
+import { REGEX } from '@/src/constants/regex.constants';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -38,27 +39,27 @@ export default function RegisterPage() {
     switch (name) {
       case 'email':
         if (!value) return 'Email is required';
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value as string)) return 'Email is invalid';
+        if (!REGEX.EMAIL.test(value as string)) return 'Email is invalid';
         return '';
       case 'password':
         if (!value) return 'Password is required';
         if ((value as string).length < 8) return 'Password must be at least 8 characters';
-        if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(value as string))
+        if (!REGEX.PASSWORD.test(value as string))
           return 'Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character';
         return '';
       case 'firstName':
         if (!value) return 'First name is required';
-        if (!/^[A-Za-z]{2,}$/.test(value as string)) return 'First name must contain only letters and be at least 2 characters';
+        if (!REGEX.NAME.test(value as string)) return 'First name must contain only letters and be at least 2 characters';
         return '';
       case 'lastName':
         if (!value) return 'Last name is required';
-        if (!/^[A-Za-z]{2,}$/.test(value as string)) return 'Last name must contain only letters and be at least 2 characters';
+        if (!REGEX.NAME.test(value as string)) return 'Last name must contain only letters and be at least 2 characters';
         return '';
       case 'phoneNumber':
-        if (value && !/^\+?(\d{10}|\d{11}|\d{12}|\d{13}|\d{14}|\d{15})$/.test(value as string)) return 'Phone number must be 10-15 digits';
+        if (value && !REGEX.PHONE.test(value as string)) return 'Phone number must be 10 digits';
         return '';
       case 'emergencyContactPhone':
-        if (value && !/^\+?(\d{10}|\d{11}|\d{12}|\d{13}|\d{14}|\d{15})$/.test(value as string)) return 'Emergency contact phone must be 10-15 digits';
+        if (value && !REGEX.PHONE.test(value as string)) return 'Emergency contact phone must be 10 digits';
         return '';
       case 'experience':
         if (value && (value as number) < 0) return 'Experience cannot be negative';
@@ -98,28 +99,28 @@ export default function RegisterPage() {
 
     // Basic required fields
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-    else if (!/^[A-Za-z]{2,}$/.test(formData.firstName)) newErrors.firstName = 'First name must contain only letters and be at least 2 characters';
+    else if (!REGEX.NAME.test(formData.firstName)) newErrors.firstName = 'First name must contain only letters and be at least 2 characters';
 
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    else if (!/^[A-Za-z]{2,}$/.test(formData.lastName)) newErrors.lastName = 'Last name must contain only letters and be at least 2 characters';
+    else if (!REGEX.NAME.test(formData.lastName)) newErrors.lastName = 'Last name must contain only letters and be at least 2 characters';
 
     if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Email is invalid';
+    else if (!REGEX.EMAIL.test(formData.email)) newErrors.email = 'Email is invalid';
 
     if (!formData.password) newErrors.password = 'Password is required';
     else if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
-    else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(formData.password))
+    else if (!REGEX.PASSWORD.test(formData.password))
       newErrors.password = 'Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character';
 
     // Phone number validation
-    if (formData.phoneNumber && !/^\+?(\d{10}|\d{11}|\d{12}|\d{13}|\d{14}|\d{15})$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = 'Phone number must be 10-15 digits';
+    if (formData.phoneNumber && !REGEX.PHONE.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = 'Phone number must be 10 digits';
     }
 
     // Role-specific validations
     if (formData.role === 'PATIENT') {
-      if (formData.emergencyContactPhone && !/^\+?(\d{10}|\d{11}|\d{12}|\d{13}|\d{14}|\d{15})$/.test(formData.emergencyContactPhone)) {
-        newErrors.emergencyContactPhone = 'Emergency contact phone must be 10-15 digits';
+      if (formData.emergencyContactPhone && !REGEX.PHONE.test(formData.emergencyContactPhone)) {
+        newErrors.emergencyContactPhone = 'Emergency contact phone must be 10 digits';
       }
     }
 

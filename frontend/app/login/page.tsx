@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/auth/auth.context';
 import { getErrorMessage } from '@/src/utils/api-error';
+import { REGEX } from '@/src/constants/regex.constants';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -21,12 +22,12 @@ export default function LoginPage() {
     switch (name) {
       case 'email':
         if (!value) return 'Email is required';
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Email is invalid';
+        if (!REGEX.EMAIL.test(value)) return 'Email is invalid';
         return '';
       case 'password':
         if (!value) return 'Password is required';
         if (value.length < 8) return 'Password must be at least 8 characters';
-        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(value as string))
+        if (!REGEX.PASSWORD.test(value as string))
           return 'Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character';
         return '';
       default:
@@ -60,7 +61,7 @@ export default function LoginPage() {
     // Validate email
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (!REGEX.EMAIL.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
 
@@ -69,7 +70,7 @@ export default function LoginPage() {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(formData.password)) {
+    } else if (!REGEX.PASSWORD.test(formData.password)) {
       newErrors.password = 'Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character';
     }
 
