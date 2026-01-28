@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/auth/auth.context';
+import { getErrorMessage } from '@/src/utils/api-error';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -89,8 +90,8 @@ export default function LoginPage() {
     try {
       await login(formData.email, formData.password);
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     }
   };
 
@@ -188,7 +189,7 @@ export default function LoginPage() {
 
           <div className="text-center">
             <p className="text-gray-600">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/register" className="text-blue-600 font-medium hover:underline">
                 Sign up
               </Link>

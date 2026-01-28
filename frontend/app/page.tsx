@@ -167,7 +167,7 @@ export default function HomePage() {
                 ))}
               </div>
               <p className="text-gray-600 italic mb-6">
-                "This platform has revolutionized how I manage my appointments. So convenient and user-friendly!"
+                  &ldquo;This platform has revolutionized how I manage my appointments. So convenient and user-friendly!&rdquo;
               </p>
               <div className="flex items-center">
                 <div className="flex-shrink-0 mr-4">
@@ -191,7 +191,7 @@ export default function HomePage() {
                 ))}
               </div>
               <p className="text-gray-600 italic mb-6">
-                "Managing patient appointments has never been easier. Highly recommend this platform!"
+                &ldquo;Managing patient appointments has never been easier. Highly recommend this platform!&ldquo;
               </p>
               <div className="flex items-center">
                 <div className="flex-shrink-0 mr-4">
@@ -215,7 +215,7 @@ export default function HomePage() {
                 ))}
               </div>
               <p className="text-gray-600 italic mb-6">
-                "The scheduling system has reduced no-shows significantly and improved our workflow."
+                &ldquo;The scheduling system has reduced no-shows significantly and improved our workflow.&ldquo;
               </p>
               <div className="flex items-center">
                 <div className="flex-shrink-0 mr-4">

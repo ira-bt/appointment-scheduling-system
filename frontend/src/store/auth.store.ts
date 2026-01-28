@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { AuthResponse, User } from '@/src/types/user.types';
 import { authService } from '@/src/services/auth.service';
+import { RegisterRequest } from '@/src/types/user.types';
+import axios from 'axios';
+import { getErrorMessage } from '../utils/api-error';
 
 interface AuthState {
   user: User | null;
@@ -11,7 +14,7 @@ interface AuthState {
   
   // Actions
   login: (email: string, password: string) => Promise<AuthResponse | null>;
-  register: (userData: any) => Promise<AuthResponse | null>;
+  register: (userData: RegisterRequest) => Promise<AuthResponse | null>;
   logout: () => void;
   refreshToken: () => Promise<void>;
   checkAuthStatus: () => Promise<void>;
@@ -45,16 +48,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.response?.data?.message || 'Login failed',
-        isLoading: false
+        error: getErrorMessage(error),
+        isLoading: false,
       });
       throw error;
     }
   },
 
-  register: async (userData: any) => {
+  register: async (userData: RegisterRequest) => {
     try {
       set({ isLoading: true, error: null });
 
@@ -75,9 +78,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       set({
-        error: error.response?.data?.message || 'Registration failed',
+        error: getErrorMessage(error),
         isLoading: false
       });
       throw error;
@@ -115,7 +118,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
       set({ token: accessToken });
-    } catch (error) {
+    } catch (error:unknown) {
       get().logout();
       throw error;
     }

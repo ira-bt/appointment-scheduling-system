@@ -3,14 +3,16 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuthStore } from '@/src/store/auth.store';
 import { User } from '@/src/types/user.types';
+import { AuthResponse } from '@/src/types/user.types';
+import { RegisterRequest } from '@/src/types/user.types';
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<any>;
-  register: (userData: any) => Promise<any>;
+  login: (email: string, password: string) => Promise<AuthResponse | null>;
+  register: (userData: RegisterRequest) => Promise<AuthResponse | null>;
   logout: () => void;
   error: string | null;
 }

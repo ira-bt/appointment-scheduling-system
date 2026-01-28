@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/auth/auth.context';
+import { getErrorMessage } from '@/src/utils/api-error';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -165,8 +166,8 @@ export default function RegisterPage() {
 
       await register(registrationData);
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Registration failed');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     }
   };
 
