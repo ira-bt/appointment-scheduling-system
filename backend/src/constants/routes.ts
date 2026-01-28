@@ -1,9 +1,10 @@
-export const API= '/api';
+export const API = '/api';
 
 export const ROUTES = {
   AUTH: {
     BASE: '/auth',
     REGISTER: '/register',
     LOGIN: '/login',
+    REFRESH: '/refresh',
   },
 };
