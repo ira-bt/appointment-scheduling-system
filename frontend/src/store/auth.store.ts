@@ -13,7 +13,7 @@ interface AuthState {
   error: string | null;
   
   // Actions
-  login: (email: string, password: string) => Promise<AuthResponse | null>;
+  login: (email: string, password: string) => Promise<AuthResponse>;
   register: (userData: RegisterRequest) => Promise<AuthResponse | null>;
   logout: () => void;
   refreshToken: () => Promise<void>;

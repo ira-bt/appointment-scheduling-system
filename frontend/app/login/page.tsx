@@ -68,11 +68,13 @@ export default function LoginPage() {
     // Validate password
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    } else if (!REGEX.PASSWORD.test(formData.password)) {
-      newErrors.password = 'Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character';
-    }
+    } 
+    // else if (formData.password.length < 8) {
+    //   newErrors.password = 'Password must be at least 8 characters';
+    // } 
+    // else if (!REGEX.PASSWORD.test(formData.password)) {
+    //   newErrors.password = 'Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character, min length 8';
+    // }
 
     setErrors(newErrors);
     const isValid = Object.keys(newErrors).length === 0 && !!formData.email && !!formData.password;
@@ -186,8 +188,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="divider my-8 text-gray-400">OR</div>
-
+          <br></br>
           <div className="text-center">
             <p className="text-gray-600">
               Don&apos;t have an account?{' '}

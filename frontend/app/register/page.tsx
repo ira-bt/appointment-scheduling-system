@@ -108,9 +108,9 @@ export default function RegisterPage() {
     else if (!REGEX.EMAIL.test(formData.email)) newErrors.email = 'Email is invalid';
 
     if (!formData.password) newErrors.password = 'Password is required';
-    else if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
+    // else if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
     else if (!REGEX.PASSWORD.test(formData.password))
-      newErrors.password = 'Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character';
+      newErrors.password = 'Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character, min length 8';
 
     // Phone number validation
     if (formData.phoneNumber && !REGEX.PHONE.test(formData.phoneNumber)) {
@@ -550,8 +550,7 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <div className="divider my-8 text-gray-400">OR</div>
-
+          <br></br>
           <div className="text-center">
             <p className="text-gray-600">
               Already have an account?{' '}
