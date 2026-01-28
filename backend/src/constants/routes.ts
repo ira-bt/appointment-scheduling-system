@@ -6,7 +6,4 @@ export const ROUTES = {
     REGISTER: '/register',
     LOGIN: '/login',
   },
-  APPOINTMENTS: {
-    BASE: '/appointments',
-  },
 };
