@@ -1,9 +1,10 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -189,8 +190,6 @@ model Rating {
   
   rating Int // 1-5
   review String?
-  isModerated Boolean @default(false)
-  isApproved Boolean @default(true)
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
