@@ -6,7 +6,8 @@ import { IRegisterUserRequest, ILoginUserRequest, IAuthResponse } from '../inter
 import { IToken } from '../interfaces/token.interface';
 import emailService from '../utils/email.util';
 import { IApiResponse } from '../interfaces/response.interface';
-import { validateEmail, validatePassword } from '../utils/validation.util';
+import { validateEmail, validateName, validatePassword, validatePhoneNumber } from '../utils/validation.util';
+import { REGEX } from '../constants/regex.constants';
 
 const prisma = new PrismaClient();
 
@@ -101,7 +102,7 @@ export class UserController {
       }
 
       // Validate name format
-      if (firstName && !/^[A-Za-z]{2,}$/.test(firstName)) {
+      if (firstName && !validateName(firstName)) {
         res.status(400).json({
           success: false,
           message: 'First name must contain only alphabetic characters and be at least 2 characters',
@@ -110,7 +111,7 @@ export class UserController {
         return;
       }
 
-      if (lastName && !/^[A-Za-z]{2,}$/.test(lastName)) {
+      if (lastName && !validateName(lastName)) {
         res.status(400).json({
           success: false,
           message: 'Last name must contain only alphabetic characters and be at least 2 characters',
@@ -120,7 +121,7 @@ export class UserController {
       }
 
       // Validate phone number if provided
-      if (phoneNumber && !/^\+?(\d{10}|\d{11}|\d{12}|\d{13}|\d{14}|\d{15})$/.test(phoneNumber)) {
+      if (phoneNumber && !validatePhoneNumber(phoneNumber)) {
         res.status(400).json({
           success: false,
           message: 'Phone number must be 10-15 digits',
@@ -131,7 +132,7 @@ export class UserController {
 
       // Role-specific validation
       if (role === 'PATIENT') {
-        if (emergencyContactPhone && !/^\+?(\d{10}|\d{11}|\d{12}|\d{13}|\d{14}|\d{15})$/.test(emergencyContactPhone)) {
+        if (emergencyContactPhone && !validatePhoneNumber(emergencyContactPhone)) {
           res.status(400).json({
             success: false,
             message: 'Emergency contact phone must be 10-15 digits',
