@@ -6,7 +6,8 @@ import dotenv from 'dotenv';
 import { UserController } from './controllers/user.controller';
 import { IApiResponse } from './interfaces/response.interface';
 import { validateRegisterBody, validateLoginBody } from './utils/validation.util';
-
+import { API, ROUTES } from './constants/routes';
+import authRoutes from './routes/auth.routes'
 // Load environment variables
 dotenv.config();
 
@@ -15,7 +16,10 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(helmet()); // Security headers
-app.use(cors()); // Enable CORS
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+})); // Enable CORS
 app.use(morgan('combined')); // Logging
 app.use(express.json({ limit: '10mb' })); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
@@ -30,8 +34,9 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // User routes
-app.post('/api/auth/register', validateRegisterBody, UserController.register);
-app.post('/api/auth/login', validateLoginBody, UserController.login);
+// app.post(ROUTES.AUTH.REGISTER, validateRegisterBody, UserController.register);
+// app.post(ROUTES.AUTH.LOGIN, validateLoginBody, UserController.login);
+app.use(`${API}${ROUTES.AUTH.BASE}`, authRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

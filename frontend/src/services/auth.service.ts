@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { AuthResponse, RegisterRequest, LoginRequest } from '@/src/types/user.types';
-
+import { STORAGE_KEYS } from '../constants/storage-keys';
+import { API } from '../constants/api-routes';
+import { APP_ROUTES } from '../constants/app-routes';
 // Define the base URL for the backend API
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
@@ -16,7 +18,7 @@ const apiClient = axios.create({
 // Request interceptor to add token to requests
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -37,12 +39,12 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
+        const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
         if (!refreshToken) {
           throw new Error('No refresh token available');
         }
 
-        const response = await axios.post(`${BACKEND_BASE_URL}/api/auth/refresh`, {
+        const response = await axios.post(`${BACKEND_BASE_URL}${API.AUTH.REFRESH}`, {
           refreshToken
         });
 
@@ -50,7 +52,7 @@ apiClient.interceptors.response.use(
         const { accessToken } = responseData.data;
 
         // Update tokens
-        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
 
         // Retry original request with new token
         if (!originalRequest.headers) {
@@ -60,10 +62,10 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         // If refresh fails, redirect to login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+          window.location.href = APP_ROUTES.AUTH.LOGIN;
         }
         return Promise.reject(refreshError);
       }
@@ -76,26 +78,26 @@ apiClient.interceptors.response.use(
 // Auth API service
 export const authService = {
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {
-    const response = await apiClient.post('/api/auth/login', credentials);
+    const response = await apiClient.post(API.AUTH.LOGIN, credentials);
     const responseData = response.data as { data: AuthResponse };
     return responseData.data;
   },
 
   register: async (userData: RegisterRequest): Promise<AuthResponse> => {
-    const response = await apiClient.post('/api/auth/register', userData);
+    const response = await apiClient.post(API.AUTH.REGISTER, userData);
     const responseData = response.data as { data: AuthResponse };
     return responseData.data;
   },
 
   refreshToken: async (refreshToken: string) => {
-    const response = await apiClient.post('/api/auth/refresh', { refreshToken });
+    const response = await apiClient.post(API.AUTH.REFRESH, { refreshToken });
     const responseData = response.data as { data: { accessToken: string } };
     return responseData.data;
   },
 
   logout: () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
   }
 };
 

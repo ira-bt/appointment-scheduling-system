@@ -4,6 +4,7 @@ import { authService } from '@/src/services/auth.service';
 import { RegisterRequest } from '@/src/types/user.types';
 import axios from 'axios';
 import { getErrorMessage } from '../utils/api-error';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 interface AuthState {
   user: User | null;
@@ -34,8 +35,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const data = await authService.login({ email, password });
 
       // Store tokens in localStorage
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.accessToken);
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.refreshToken);
 
       // Set axios defaults
       axios.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
@@ -64,8 +65,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const data = await authService.register(userData);
 
       // Store tokens in localStorage
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.accessToken);
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.refreshToken);
 
       // Set axios defaults
       axios.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
@@ -89,8 +90,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: () => {
     // Remove tokens from localStorage
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
 
     // Remove authorization header
     delete axios.defaults.headers.common['Authorization'];
@@ -106,7 +107,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   refreshToken: async () => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
       if (!refreshToken) {
         throw new Error('No refresh token available');
       }
@@ -114,7 +115,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { accessToken } = await authService.refreshToken(refreshToken);
 
       // Update tokens
-      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
       axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
       set({ token: accessToken });
@@ -125,7 +126,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   checkAuthStatus: async () => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     if (!token) return;
 
     try {
@@ -141,8 +142,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ token, isAuthenticated: true });
     } catch (error) {
       // If token verification fails, remove invalid tokens
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
       delete axios.defaults.headers.common['Authorization'];
       set({ token: null, isAuthenticated: false });
     }
