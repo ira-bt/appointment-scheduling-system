@@ -23,6 +23,7 @@ export class UserController {
         lastName,
         phoneNumber,
         role,
+        city,
         // Patient-specific fields
         bloodType,
         allergies,
@@ -31,6 +32,7 @@ export class UserController {
         emergencyContactPhone,
         // Doctor-specific fields
         bio,
+        specialty,
         experience,
         qualification,
         consultationFee
@@ -63,6 +65,7 @@ export class UserController {
             lastName,
             phoneNumber,
             role,
+            city,
           },
         });
 
@@ -70,7 +73,7 @@ export class UserController {
           await tx.patientProfile.create({
             data: {
               userId: user.id,
-              bloodType: bloodType as any,
+              bloodType: bloodType as any, // Cast to BloodType enum
               allergies,
               medicalHistory,
               emergencyContactName,
@@ -82,6 +85,7 @@ export class UserController {
             data: {
               userId: user.id,
               bio,
+              specialty,
               experience,
               qualification,
               consultationFee
@@ -126,6 +130,7 @@ export class UserController {
           lastName: result.lastName,
           phoneNumber: result.phoneNumber || undefined,
           role: result.role,
+          city: result.city || undefined,
           profileImage: result.profileImage || undefined,
           createdAt: result.createdAt,
           updatedAt: result.updatedAt,
@@ -217,6 +222,7 @@ export class UserController {
           lastName: user.lastName,
           phoneNumber: user.phoneNumber || undefined,
           role: user.role,
+          city: user.city || undefined,
           profileImage: user.profileImage || undefined,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,

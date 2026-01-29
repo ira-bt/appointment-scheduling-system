@@ -5,9 +5,34 @@ export interface User {
   lastName: string;
   phoneNumber?: string;
   role: 'PATIENT' | 'DOCTOR';
+  city?: string;
   profileImage?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  patientProfile?: PatientProfile;
+  doctorProfile?: DoctorProfile;
+}
+
+export interface PatientProfile {
+  userId: string;
+  bloodType?: string;
+  allergies?: string;
+  medicalHistory?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+export interface DoctorProfile {
+  userId: string;
+  bio?: string;
+  specialty?: string;
+  experience?: number;
+  qualification?: string;
+  consultationFee: number;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 export interface AuthResponse {
@@ -23,6 +48,7 @@ export interface RegisterRequest {
   lastName: string;
   phoneNumber?: string;
   role: 'PATIENT' | 'DOCTOR';
+  city?: string;
   // Patient-specific fields
   bloodType?: string;
   allergies?: string;
@@ -31,6 +57,7 @@ export interface RegisterRequest {
   emergencyContactPhone?: string;
   // Doctor-specific fields
   bio?: string;
+  specialty?: string;
   experience?: number;
   qualification?: string;
   consultationFee?: number;

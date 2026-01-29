@@ -12,4 +12,7 @@ export const API = {
   USERS: {
     ME: `${API_BASE}/users/me`,
   },
+  DOCTORS: {
+    BASE: `${API_BASE}/doctors`,
+  },
 } as const;

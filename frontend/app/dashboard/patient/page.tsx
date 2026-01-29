@@ -2,6 +2,8 @@
 
 import ProtectedRoute from '@/src/components/auth/ProtectedRoute';
 import { useAuth } from '@/src/auth/auth.context';
+import Link from 'next/link';
+import { APP_ROUTES } from '@/src/constants/app-routes';
 
 export default function PatientDashboard() {
     const { user, logout } = useAuth();
@@ -69,8 +71,8 @@ export default function PatientDashboard() {
                             </svg>
                         </div>
                         <h2 className="text-xl font-semibold text-gray-700">No appointments yet</h2>
-                        <p className="text-gray-500 mb-6">You haven&apos;t booked any appointments yet. Find a doctor to get started.</p>
-                        <button className="btn btn-primary text-white">Book Appointment</button>
+                        <p className="text-gray-500 mb-6">You haven't booked any appointments yet. Find a doctor to get started.</p>
+                        <Link href={APP_ROUTES.DOCTORS} className="btn btn-primary text-white">Find a Doctor</Link>
                     </div>
                 </div>
             </div>

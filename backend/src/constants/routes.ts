@@ -14,4 +14,8 @@ export const ROUTES = {
     BASE: '/users',
     ME: '/me',
   },
+  DOCTORS: {
+    BASE: '/doctors',
+    LIST: '/',
+  },
 };

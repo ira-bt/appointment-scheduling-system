@@ -7,6 +7,7 @@ export interface IUser {
   lastName: string;
   phoneNumber?: string;
   role: Role;
+  city?: string;
   profileImage?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -19,6 +20,7 @@ export interface IRegisterUserRequest {
   lastName: string;
   phoneNumber?: string;
   role: Role;
+  city?: string;
   // Patient-specific fields
   bloodType?: string;
   allergies?: string;
@@ -27,6 +29,7 @@ export interface IRegisterUserRequest {
   emergencyContactPhone?: string;
   // Doctor-specific fields
   bio?: string;
+  specialty?: string;
   experience?: number;
   qualification?: string;
   consultationFee?: number;
