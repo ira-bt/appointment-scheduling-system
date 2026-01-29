@@ -3,8 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { IApiResponse } from '../interfaces/response.interface';
 import { z } from 'zod';
 import { CitySchema, SpecialtySchema } from '../constants/healthcare.constants';
-
-const prisma = new PrismaClient();
+import prisma from '../config/prisma';
 
 // Query validation schema
 export const doctorQuerySchema = z.object({

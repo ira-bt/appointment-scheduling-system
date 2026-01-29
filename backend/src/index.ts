@@ -1,8 +1,11 @@
+import dotenv from 'dotenv';
+// Load environment variables immediately
+dotenv.config();
+
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 import { UserController } from './controllers/user.controller';
 import { IApiResponse } from './interfaces/response.interface';
 import { validateRegisterBody, validateLoginBody } from './utils/validation.util';
@@ -10,8 +13,6 @@ import { API, ROUTES } from './constants/routes';
 import authRoutes from './routes/auth.routes'
 import userRoutes from './routes/user.routes';
 import doctorRoutes from './routes/doctor.routes';
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;

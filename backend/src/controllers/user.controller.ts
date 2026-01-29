@@ -6,8 +6,7 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
 import { IRegisterUserRequest, ILoginUserRequest, IAuthResponse } from '../interfaces/user.interface';
 import emailService from '../utils/email.util';
 import { IApiResponse } from '../interfaces/response.interface';
-
-const prisma = new PrismaClient();
+import prisma from '../config/prisma';
 
 export class UserController {
   /**
