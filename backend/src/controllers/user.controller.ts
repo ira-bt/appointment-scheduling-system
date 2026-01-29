@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
+import crypto from 'crypto';
 import { hashPassword, comparePassword } from '../utils/password.util';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.util';
 import { IRegisterUserRequest, ILoginUserRequest, IAuthResponse } from '../interfaces/user.interface';
@@ -307,6 +308,210 @@ export class UserController {
           accessToken: newAccessToken,
           refreshToken: newRefreshToken,
         },
+        statusCode: 200,
+      } as IApiResponse);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Forgot password
+   * Generates a reset token and sends an email
+   */
+  static async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email } = req.body;
+
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        // For security reasons, don't reveal if user exists
+        res.status(200).json({
+          success: true,
+          message: 'If an account with that email exists, we have sent a reset link',
+          statusCode: 200,
+        } as IApiResponse);
+        return;
+      }
+
+      // Generate random token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+      // Store token in database
+      await prisma.passwordResetToken.create({
+        data: {
+          email,
+          token: resetToken,
+          expiresAt,
+        },
+      });
+
+      // Send email
+      emailService.sendPasswordResetEmail(email, user.firstName, resetToken).catch(err => {
+        console.error('Failed to send password reset email:', err);
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'If an account with that email exists, we have sent a reset link',
+        statusCode: 200,
+      } as IApiResponse);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Reset password
+   * Verifies the reset token and updates the password
+   */
+  static async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { token, password } = req.body;
+
+      // Find valid token
+      const resetTokenRecord = await prisma.passwordResetToken.findUnique({
+        where: { token },
+      });
+
+      if (!resetTokenRecord || resetTokenRecord.isUsed || resetTokenRecord.expiresAt < new Date()) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid or expired reset token',
+          statusCode: 400,
+        } as IApiResponse);
+        return;
+      }
+
+      // Update user password and invalidate tokens
+      const hashedPassword = await hashPassword(password);
+
+      await prisma.$transaction(async (tx) => {
+        const user = await tx.user.update({
+          where: { email: resetTokenRecord.email },
+          data: { password: hashedPassword },
+        });
+
+        // Mark token as used
+        await tx.passwordResetToken.update({
+          where: { id: resetTokenRecord.id },
+          data: { isUsed: true },
+        });
+
+        // Revoke all refresh tokens for security
+        await tx.refreshToken.updateMany({
+          where: { userId: user.id },
+          data: { isRevoked: true },
+        });
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Password reset successful. All active sessions have been logged out.',
+        statusCode: 200,
+      } as IApiResponse);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Change password
+   * Authenticated user changes their own password
+   */
+  static async changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const userId = req.user.id; // From protect middleware
+
+      // Fetch user with password
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found',
+          statusCode: 404,
+        } as IApiResponse);
+        return;
+      }
+
+      // Check current password
+      const isMatch = await comparePassword(currentPassword, user.password);
+      if (!isMatch) {
+        res.status(401).json({
+          success: false,
+          message: 'Incorrect current password',
+          statusCode: 401,
+        } as IApiResponse);
+        return;
+      }
+
+      // Hash new password
+      const hashedPassword = await hashPassword(newPassword);
+
+      // Update password and revoke all tokens
+      await prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: userId },
+          data: { password: hashedPassword },
+        });
+
+        // Revoke all existing sessions
+        await tx.refreshToken.updateMany({
+          where: { userId },
+          data: { isRevoked: true },
+        });
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Password updated successfully. Please log in again with your new password.',
+        statusCode: 200,
+      } as IApiResponse);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get current user profile
+   * Authenticated user fetches their own profile
+   */
+  static async getMe(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user.id; // From protect middleware
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          patientProfile: true,
+          doctorProfile: true,
+        },
+      });
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found',
+          statusCode: 404,
+        } as IApiResponse);
+        return;
+      }
+
+      // Remove sensitive data
+      const { password, ...userWithoutPassword } = user;
+
+      res.status(200).json({
+        success: true,
+        message: 'User profile fetched successfully',
+        data: userWithoutPassword,
         statusCode: 200,
       } as IApiResponse);
     } catch (error) {

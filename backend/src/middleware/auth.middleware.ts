@@ -1,37 +1,88 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/jwt.util';
-import { ITokenPayload } from '../interfaces/token.interface';
+import { PrismaClient } from '@prisma/client';
+import { IApiResponse } from '../interfaces/response.interface';
+
+const prisma = new PrismaClient();
 
 declare global {
   namespace Express {
     interface Request {
-      user?: ITokenPayload;
+      user?: any;
     }
   }
 }
 
-export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+/**
+ * Authentication middleware
+ * Verifies JWT and attaches user to request
+ */
+export const protect = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    let token: string | undefined;
 
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: 'Access token required',
-      statusCode: 401,
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'You are not logged in. Please log in to get access.',
+        statusCode: 401,
+      } as IApiResponse);
+    }
+
+    // Verify token
+    const decoded = verifyAccessToken(token);
+    if (!decoded) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired token. Please log in again.',
+        statusCode: 401,
+      } as IApiResponse);
+    }
+
+    // Check if user still exists
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+      }
     });
-  }
 
-  const decoded = verifyAccessToken(token);
-  
-  if (!decoded) {
-    return res.status(403).json({
-      success: false,
-      message: 'Invalid or expired access token',
-      statusCode: 403,
-    });
-  }
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'The user belonging to this token no longer exists.',
+        statusCode: 401,
+      } as IApiResponse);
+    }
 
-  req.user = decoded;
-  next();
+    // Grant Access
+    req.user = user;
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Restrict access to specific roles
+ */
+export const restrictTo = (...roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to perform this action',
+        statusCode: 403,
+      } as IApiResponse);
+    }
+    next();
+  };
 };

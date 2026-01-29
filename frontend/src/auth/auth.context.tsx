@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect} from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useAuthStore } from '@/src/store/auth.store';
 import { User } from '@/src/types/user.types';
 import { AuthResponse } from '@/src/types/user.types';
@@ -34,7 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     checkAuthStatus();
-  });
+  }, [checkAuthStatus]);
 
   return (
     <AuthContext.Provider value={{

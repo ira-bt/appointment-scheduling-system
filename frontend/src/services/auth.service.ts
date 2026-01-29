@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AuthResponse, RegisterRequest, LoginRequest } from '@/src/types/user.types';
+import { AuthResponse, RegisterRequest, LoginRequest, ForgotPasswordRequest, ResetPasswordRequest, User } from '@/src/types/user.types';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 import { API } from '../constants/api-routes';
 import { APP_ROUTES } from '../constants/app-routes';
@@ -20,7 +20,7 @@ apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -89,7 +89,7 @@ export const authService = {
     return responseData.data;
   },
 
-  refreshToken: async (refreshToken: string) => {
+  refreshToken: async (refreshToken: string): Promise<{ accessToken: string }> => {
     const response = await apiClient.post(API.AUTH.REFRESH, { refreshToken });
     const responseData = response.data as { data: { accessToken: string } };
     return responseData.data;
@@ -98,6 +98,22 @@ export const authService = {
   logout: () => {
     localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+  },
+
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    const response = await apiClient.post(API.AUTH.FORGOT_PASSWORD, { email });
+    return response.data;
+  },
+
+  resetPassword: async (data: ResetPasswordRequest): Promise<{ message: string }> => {
+    const response = await apiClient.post(API.AUTH.RESET_PASSWORD, data);
+    return response.data;
+  },
+
+  getMe: async (): Promise<User> => {
+    const response = await apiClient.get(API.USERS.ME);
+    const responseData = response.data as { data: User };
+    return responseData.data;
   }
 };
 

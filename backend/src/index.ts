@@ -8,6 +8,7 @@ import { IApiResponse } from './interfaces/response.interface';
 import { validateRegisterBody, validateLoginBody } from './utils/validation.util';
 import { API, ROUTES } from './constants/routes';
 import authRoutes from './routes/auth.routes'
+import userRoutes from './routes/user.routes'
 // Load environment variables
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.get('/', (req: Request, res: Response) => {
 // app.post(ROUTES.AUTH.REGISTER, validateRegisterBody, UserController.register);
 // app.post(ROUTES.AUTH.LOGIN, validateLoginBody, UserController.login);
 app.use(`${API}${ROUTES.AUTH.BASE}`, authRoutes);
+app.use(`${API}${ROUTES.USERS.BASE}`, userRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

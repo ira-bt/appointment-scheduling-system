@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/auth/auth.context';
 import { getErrorMessage } from '@/src/utils/api-error';
 import { REGEX } from '@/src/constants/regex.constants';
+import { APP_ROUTES } from '@/src/constants/app-routes';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -165,8 +166,17 @@ export default function RegisterPage() {
         consultationFee: formData.consultationFee,
       };
 
-      await register(registrationData);
-      router.push('/dashboard');
+      const response = await register(registrationData);
+      if (response) {
+        const role = response.user.role;
+        if (role === 'PATIENT') {
+          router.push(APP_ROUTES.DASHBOARD.PATIENT);
+        } else if (role === 'DOCTOR') {
+          router.push(APP_ROUTES.DASHBOARD.DOCTOR);
+        } else {
+          router.push(APP_ROUTES.DASHBOARD.BASE);
+        }
+      }
     } catch (err: unknown) {
       setError(getErrorMessage(err));
     }
@@ -554,7 +564,7 @@ export default function RegisterPage() {
           <div className="text-center">
             <p className="text-gray-600">
               Already have an account?{' '}
-              <Link href="/login" className="text-blue-600 font-medium hover:underline">
+              <Link href={APP_ROUTES.AUTH.LOGIN} className="text-blue-600 font-medium hover:underline">
                 Sign in
               </Link>
             </p>
