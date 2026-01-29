@@ -25,7 +25,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true,
   error: null,
 
   login: async (email: string, password: string) => {
@@ -127,22 +127,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   checkAuthStatus: async () => {
     const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-    if (!token) return;
+
+    if (!token) {
+      set({ isLoading: false, isAuthenticated: false });
+      return;
+    }
 
     try {
+      set({ isLoading: true });
+
       // Set axios defaults for the verification request
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       // Fetch user profile to verify token
       const user = await authService.getMe();
 
-      set({ user, token, isAuthenticated: true });
+      set({ user, token, isAuthenticated: true, isLoading: false });
     } catch (error) {
       // If token verification fails, remove invalid tokens
       localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
       delete axios.defaults.headers.common['Authorization'];
-      set({ user: null, token: null, isAuthenticated: false });
+      set({ user: null, token: null, isAuthenticated: false, isLoading: false });
     }
   }
 }));
