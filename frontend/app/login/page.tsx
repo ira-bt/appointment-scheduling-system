@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/auth/auth.context';
 import { getErrorMessage } from '@/src/utils/api-error';
 import { REGEX } from '@/src/constants/regex.constants';
+import { APP_ROUTES } from '@/src/constants/app-routes';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -68,7 +69,7 @@ export default function LoginPage() {
     // Validate password
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } 
+    }
     // else if (formData.password.length < 8) {
     //   newErrors.password = 'Password must be at least 8 characters';
     // } 
@@ -91,8 +92,16 @@ export default function LoginPage() {
     }
 
     try {
-      await login(formData.email, formData.password);
-      router.push('/dashboard');
+      const response = await login(formData.email, formData.password);
+      const role = response.user.role;
+
+      if (role === 'PATIENT') {
+        router.push(APP_ROUTES.DASHBOARD.PATIENT);
+      } else if (role === 'DOCTOR') {
+        router.push(APP_ROUTES.DASHBOARD.DOCTOR);
+      } else {
+        router.push(APP_ROUTES.DASHBOARD.BASE);
+      }
     } catch (err: unknown) {
       setError(getErrorMessage(err));
     }
@@ -172,6 +181,12 @@ export default function LoginPage() {
               )}
             </div>
 
+            <div className="flex items-center justify-end">
+              <Link href={APP_ROUTES.AUTH.FORGOT_PASSWORD} title="Forgot Password" className="text-sm font-medium text-blue-600 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+
             <button
               type="submit"
               className={`btn ${isFormValid && !isLoading ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'} text-white w-full py-3 rounded-lg font-medium`}
@@ -192,7 +207,7 @@ export default function LoginPage() {
           <div className="text-center">
             <p className="text-gray-600">
               Don&apos;t have an account?{' '}
-              <Link href="/register" className="text-blue-600 font-medium hover:underline">
+              <Link href={APP_ROUTES.AUTH.REGISTER} className="text-blue-600 font-medium hover:underline">
                 Sign up
               </Link>
             </p>

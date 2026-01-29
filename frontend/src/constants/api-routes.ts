@@ -6,5 +6,10 @@ export const API = {
     LOGIN: `${API_BASE}/auth/login`,
     REGISTER: `${API_BASE}/auth/register`,
     REFRESH: `${API_BASE}/auth/refresh`,
+    FORGOT_PASSWORD: `${API_BASE}/auth/forgot-password`,
+    RESET_PASSWORD: `${API_BASE}/auth/reset-password`,
+  },
+  USERS: {
+    ME: `${API_BASE}/users/me`,
   },
 } as const;

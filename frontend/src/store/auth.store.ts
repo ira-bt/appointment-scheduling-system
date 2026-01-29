@@ -12,7 +12,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  
+
   // Actions
   login: (email: string, password: string) => Promise<AuthResponse>;
   register: (userData: RegisterRequest) => Promise<AuthResponse | null>;
@@ -25,7 +25,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true,
   error: null,
 
   login: async (email: string, password: string) => {
@@ -119,7 +119,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
       set({ token: accessToken });
-    } catch (error:unknown) {
+    } catch (error: unknown) {
       get().logout();
       throw error;
     }
@@ -127,25 +127,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   checkAuthStatus: async () => {
     const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-    if (!token) return;
+
+    if (!token) {
+      set({ isLoading: false, isAuthenticated: false });
+      return;
+    }
 
     try {
-      // Verify token by making a request to a protected endpoint
-      // For now, we'll just set the user as authenticated if token exists
+      set({ isLoading: true });
+
+      // Set axios defaults for the verification request
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
-      // TODO: Implement actual token verification endpoint
-      // const response = await axios.get(`${BACKEND_BASE_URL}/api/auth/me`);
-      // set({ user: response.data.user, isAuthenticated: true, token });
-      
-      // For now, just set the token and assume authenticated
-      set({ token, isAuthenticated: true });
+
+      // Fetch user profile to verify token
+      const user = await authService.getMe();
+
+      set({ user, token, isAuthenticated: true, isLoading: false });
     } catch (error) {
       // If token verification fails, remove invalid tokens
       localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
       delete axios.defaults.headers.common['Authorization'];
-      set({ token: null, isAuthenticated: false });
+      set({ user: null, token: null, isAuthenticated: false, isLoading: false });
     }
   }
 }));

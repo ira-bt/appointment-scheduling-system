@@ -6,5 +6,12 @@ export const ROUTES = {
     REGISTER: '/register',
     LOGIN: '/login',
     REFRESH: '/refresh',
+    FORGOT_PASSWORD: '/forgot-password',
+    RESET_PASSWORD: '/reset-password',
+    CHANGE_PASSWORD: '/change-password',
+  },
+  USERS: {
+    BASE: '/users',
+    ME: '/me',
   },
 };

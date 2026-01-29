@@ -91,6 +91,50 @@ class EmailService {
       text: `Welcome to MediScheduler, ${firstName}! Thank you for joining us.`,
     });
   }
+
+  public async sendPasswordResetEmail(email: string, firstName: string, resetToken: string): Promise<boolean> {
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          .container { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px; }
+          .header { background-color: #4f46e5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { padding: 20px; line-height: 1.6; color: #374151; }
+          .button { display: inline-block; padding: 12px 24px; background-color: #4f46e5; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
+          .footer { text-align: center; font-size: 0.875rem; color: #6b7280; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Password Reset Request</h1>
+          </div>
+          <div class="content">
+            <p>Hi ${firstName},</p>
+            <p>You recently requested to reset your password for your MediScheduler account. Click the button below to reset it. This link is valid for 1 hour.</p>
+            <div style="text-align: center;">
+              <a href="${resetUrl}" class="button">Reset My Password</a>
+            </div>
+            <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
+            <p>Best regards,<br />The MediScheduler Team</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2026 MediScheduler. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return await this.sendEmail({
+      to: email,
+      subject: 'Reset Your MediScheduler Password',
+      html,
+      text: `Hi ${firstName}, reset your password by clicking here: ${resetUrl}`,
+    });
+  }
 }
 
 export default new EmailService();

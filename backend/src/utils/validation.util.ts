@@ -57,6 +57,20 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email format'),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+  password: z.string().regex(REGEX.PASSWORD, 'Password must be at least 8 characters with at least 1 uppercase, 1 lowercase, 1 number, and 1 special character'),
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().regex(REGEX.PASSWORD, 'New password must be at least 8 characters with at least 1 uppercase, 1 lowercase, 1 number, and 1 special character'),
+});
+
 // Validation middleware
 export const validateRegisterBody = (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -78,6 +92,57 @@ export const validateRegisterBody = (req: Request, res: Response, next: NextFunc
 export const validateLoginBody = (req: Request, res: Response, next: NextFunction) => {
   try {
     loginSchema.parse(req.body);
+    next();
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: error.issues[0].message,
+        errors: error.issues,
+        statusCode: 400,
+      });
+    }
+    next(error);
+  }
+};
+
+export const validateForgotPasswordBody = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    forgotPasswordSchema.parse(req.body);
+    next();
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: error.issues[0].message,
+        errors: error.issues,
+        statusCode: 400,
+      });
+    }
+    next(error);
+  }
+};
+
+export const validateResetPasswordBody = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    resetPasswordSchema.parse(req.body);
+    next();
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: error.issues[0].message,
+        errors: error.issues,
+        statusCode: 400,
+      });
+    }
+    next(error);
+  }
+};
+
+export const validateChangePasswordBody = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    changePasswordSchema.parse(req.body);
     next();
   } catch (error) {
     if (error instanceof z.ZodError) {

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/src/auth/auth.context';
+import { APP_ROUTES } from '@/src/constants/app-routes';
 
 export default function HomePage() {
   const { isAuthenticated, user } = useAuth();
@@ -11,7 +12,7 @@ export default function HomePage() {
       {/* Navigation */}
       <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href={APP_ROUTES.HOME} className="flex items-center space-x-2">
             <div className="bg-primary p-2 rounded-lg">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -24,16 +25,19 @@ export default function HomePage() {
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 <span className="hidden md:inline text-gray-600">Welcome, {user?.firstName}!</span>
-                <Link href="/dashboard" className="btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                <Link
+                  href={user?.role === 'DOCTOR' ? APP_ROUTES.DASHBOARD.DOCTOR : APP_ROUTES.DASHBOARD.PATIENT}
+                  className="btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                >
                   Dashboard
                 </Link>
               </div>
             ) : (
               <div className="flex space-x-2">
-                <Link href="/login" className="btn btn-ghost text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-lg">
+                <Link href={APP_ROUTES.AUTH.LOGIN} className="btn btn-ghost text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-lg">
                   Login
                 </Link>
-                <Link href="/register" className="btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                <Link href={APP_ROUTES.AUTH.REGISTER} className="btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
                   Sign Up
                 </Link>
               </div>
@@ -56,10 +60,10 @@ export default function HomePage() {
 
             {!isAuthenticated && (
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/register" className="btn bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-medium">
+                <Link href={APP_ROUTES.AUTH.REGISTER} className="btn bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-medium">
                   Get Started
                 </Link>
-                <Link href="/login" className="btn border border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 rounded-lg text-lg font-medium">
+                <Link href={APP_ROUTES.AUTH.LOGIN} className="btn border border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 rounded-lg text-lg font-medium">
                   Sign In
                 </Link>
               </div>
@@ -70,7 +74,10 @@ export default function HomePage() {
                 <p className="text-lg text-gray-700 mb-6">
                   Welcome back, {user?.firstName}! Ready to manage your appointments?
                 </p>
-                <Link href="/dashboard" className="btn bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-medium">
+                <Link
+                  href={user?.role === 'DOCTOR' ? APP_ROUTES.DASHBOARD.DOCTOR : APP_ROUTES.DASHBOARD.PATIENT}
+                  className="btn bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-medium"
+                >
                   Go to Dashboard
                 </Link>
               </div>
@@ -167,7 +174,7 @@ export default function HomePage() {
                 ))}
               </div>
               <p className="text-gray-600 italic mb-6">
-                  &ldquo;This platform has revolutionized how I manage my appointments. So convenient and user-friendly!&rdquo;
+                &ldquo;This platform has revolutionized how I manage my appointments. So convenient and user-friendly!&rdquo;
               </p>
               <div className="flex items-center">
                 <div className="flex-shrink-0 mr-4">
