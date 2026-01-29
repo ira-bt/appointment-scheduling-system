@@ -12,7 +12,7 @@ export const doctorQuerySchema = z.object({
     minExperience: z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().optional()),
     maxFee: z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().optional()),
     page: z.coerce.number().default(1),
-    limit: z.coerce.number().default(10),
+    limit: z.coerce.number().default(4),
     search: z.preprocess((val) => (val === '' ? undefined : val), z.string().optional()), // General search for name
 });
 

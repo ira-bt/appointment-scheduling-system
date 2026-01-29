@@ -3,24 +3,28 @@ import { User, DoctorProfile } from '@/src/types/user.types';
 
 interface DoctorCardProps {
     doctor: User & { doctorProfile: DoctorProfile };
+    onViewProfile: (doctor: User & { doctorProfile: DoctorProfile }) => void;
 }
 
-export default function DoctorCard({ doctor }: DoctorCardProps) {
+export default function DoctorCard({ doctor, onViewProfile }: DoctorCardProps) {
     const { firstName, lastName, city, doctorProfile } = doctor;
     const { specialty, experience, consultationFee, qualification } = doctorProfile || {};
 
     return (
-        <div className="card bg-white shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+        <div
+            className="card bg-white shadow-sm border border-gray-100 hover:shadow-md transition-all hover:border-blue-200 cursor-pointer group"
+            onClick={() => onViewProfile(doctor)}
+        >
             <div className="card-body p-5">
                 <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-4">
                         <div className="avatar">
-                            <div className="w-16 h-16 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xl">
+                            <div className="w-16 h-16 rounded-xl bg-blue-100 group-hover:bg-blue-600 group-hover:text-white transition-colors flex items-center justify-center text-blue-600 font-bold text-xl">
                                 {firstName[0]}{lastName[0]}
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-800">
+                            <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
                                 Dr. {firstName} {lastName}
                             </h3>
                             <p className="text-blue-600 font-medium text-sm">{specialty || 'General Practitioner'}</p>
@@ -51,12 +55,22 @@ export default function DoctorCard({ doctor }: DoctorCardProps) {
                     </div>
                 </div>
 
-                <div className="mt-6">
+                <div className="mt-6 flex space-x-2">
+                    <button
+                        className="btn btn-ghost btn-sm flex-1 text-blue-600 hover:bg-blue-50"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onViewProfile(doctor);
+                        }}
+                    >
+                        View Profile
+                    </button>
                     <Link
                         href={`/appointments/book?doctorId=${doctor.id}`}
-                        className="btn btn-primary btn-sm w-full text-white"
+                        className="btn btn-primary btn-sm flex-1 text-white shadow-sm"
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        Book Appointment
+                        Book Now
                     </Link>
                 </div>
             </div>

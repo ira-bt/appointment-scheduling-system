@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { doctorService, DoctorQueryParams } from '@/src/services/doctor.service';
 import { CITIES, SPECIALTIES } from '@/src/constants/healthcare.constants';
 import DoctorCard from '@/src/components/doctor/DoctorCard';
+import DoctorDetailsModal from '@/src/components/doctor/DoctorDetailsModal';
 import { User, DoctorProfile } from '@/src/types/user.types';
 import Link from 'next/link';
 import { APP_ROUTES } from '@/src/constants/app-routes';
@@ -12,11 +13,12 @@ import { getErrorMessage } from '@/src/utils/api-error';
 
 export default function DoctorDiscoveryPage() {
     const [doctors, setDoctors] = useState<(User & { doctorProfile: DoctorProfile })[]>([]);
+    const [selectedDoctor, setSelectedDoctor] = useState<(User & { doctorProfile: DoctorProfile }) | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [filters, setFilters] = useState<DoctorQueryParams>({
         page: 1,
-        limit: 6,
+        limit: 4,
         specialty: '',
         city: '',
         search: '',
@@ -59,6 +61,10 @@ export default function DoctorDiscoveryPage() {
 
     const handlePageChange = (newPage: number) => {
         setFilters(prev => ({ ...prev, page: newPage }));
+    };
+
+    const handleViewProfile = (doctor: User & { doctorProfile: DoctorProfile }) => {
+        setSelectedDoctor(doctor);
     };
 
     return (
@@ -178,7 +184,11 @@ export default function DoctorDiscoveryPage() {
                                 <div className="space-y-8">
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
                                         {doctors.map(doctor => (
-                                            <DoctorCard key={doctor.id} doctor={doctor} />
+                                            <DoctorCard
+                                                key={doctor.id}
+                                                doctor={doctor}
+                                                onViewProfile={handleViewProfile}
+                                            />
                                         ))}
                                     </div>
 
@@ -233,6 +243,11 @@ export default function DoctorDiscoveryPage() {
                         </main>
                     </div>
                 </div>
+
+                <DoctorDetailsModal
+                    doctor={selectedDoctor}
+                    onClose={() => setSelectedDoctor(null)}
+                />
             </div>
         </ProtectedRoute>
     );
