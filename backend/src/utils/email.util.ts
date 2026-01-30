@@ -135,6 +135,60 @@ class EmailService {
       text: `Hi ${firstName}, reset your password by clicking here: ${resetUrl}`,
     });
   }
+
+  /**
+   * Send booking confirmation email to doctor
+   */
+  public async sendBookingConfirmation(
+    doctorEmail: string,
+    doctorName: string,
+    patientName: string,
+    date: string,
+    time: string
+  ): Promise<boolean> {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          .container { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px; }
+          .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { padding: 20px; line-height: 1.6; color: #374151; }
+          .details { background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0; }
+          .footer { text-align: center; font-size: 0.875rem; color: #6b7280; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>New Appointment Request</h1>
+          </div>
+          <div class="content">
+            <p>Hi <strong>Dr. ${doctorName}</strong>,</p>
+            <p>You have a new appointment request on MediScheduler.</p>
+            <div class="details">
+              <p><strong>Patient:</strong> ${patientName}</p>
+              <p><strong>Date:</strong> ${date}</p>
+              <p><strong>Time:</strong> ${time}</p>
+            </div>
+            <p>Please log in to your dashboard to approve or reject this request.</p>
+            <p>Best regards,<br />The MediScheduler Team</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2026 MediScheduler. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return await this.sendEmail({
+      to: doctorEmail,
+      subject: 'New Appointment Request - MediScheduler',
+      html,
+      text: `Hello Dr. ${doctorName}, you have a new appointment request from ${patientName} for ${date} at ${time}.`,
+    });
+  }
 }
 
 export default new EmailService();

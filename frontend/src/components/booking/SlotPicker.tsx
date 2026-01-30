@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { doctorService } from '@/src/services/doctor.service';
 import { getErrorMessage } from '@/src/utils/api-error';
+import { formatDateToISO } from '@/src/utils/date';
 
 interface SlotPickerProps {
     doctorId: string;
@@ -21,8 +22,8 @@ export default function SlotPicker({ doctorId, selectedDate, onSlotSelect, selec
             setLoading(true);
             setError(null);
             try {
-                // Format date as YYYY-MM-DD
-                const formattedDate = selectedDate.toISOString().split('T')[0];
+                // Format date as YYYY-MM-DD using local time to avoid timezone offset issues
+                const formattedDate = formatDateToISO(selectedDate);
                 const response = await doctorService.getSlots(doctorId, formattedDate);
                 setSlots(response.data.slots);
             } catch (err) {

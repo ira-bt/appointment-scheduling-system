@@ -1,13 +1,25 @@
-import { apiClient } from '@/src/utils/api-client';
+import { apiClient } from '../utils/api-client';
 import { API } from '../constants/api-routes';
-import { AppointmentQueryParams, AppointmentListResponse } from '../types/appointment.types';
+
+export interface CreateAppointmentRequest {
+    doctorId: string;
+    appointmentStart: string;
+}
 
 export const appointmentService = {
     /**
-     * Fetch patient appointments with filters and pagination
+     * Create a new appointment
      */
-    getPatientAppointments: async (params: AppointmentQueryParams): Promise<AppointmentListResponse> => {
-        const response = await apiClient.get(API.APPOINTMENTS.LIST_PATIENT, { params });
+    createAppointment: async (data: CreateAppointmentRequest) => {
+        const response = await apiClient.post(API.APPOINTMENTS.BASE, data);
         return response.data;
     },
+
+    /**
+     * Get patient appointments
+     */
+    getPatientAppointments: async (params?: { type?: 'upcoming' | 'past'; page?: number; limit?: number }) => {
+        const response = await apiClient.get(API.APPOINTMENTS.LIST_PATIENT, { params });
+        return response.data;
+    }
 };
