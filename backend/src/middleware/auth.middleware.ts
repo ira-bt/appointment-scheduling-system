@@ -3,6 +3,7 @@ import { verifyAccessToken } from '../utils/jwt.util';
 import { PrismaClient } from '@prisma/client';
 import { IApiResponse } from '../interfaces/response.interface';
 import prisma from '../config/prisma';
+import { Role } from '@prisma/client';
 
 declare global {
   namespace Express {
@@ -73,7 +74,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
 /**
  * Restrict access to specific roles
  */
-export const restrictTo = (...roles: string[]) => {
+export const restrictTo = (...roles: Role[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({

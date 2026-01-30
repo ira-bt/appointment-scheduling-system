@@ -1,4 +1,4 @@
-import { Role } from '@prisma/client';
+import { Role, BloodType } from '@prisma/client';
 
 export interface IUser {
   id: string;
@@ -22,7 +22,7 @@ export interface IRegisterUserRequest {
   role: Role;
   city?: string;
   // Patient-specific fields
-  bloodType?: string;
+  bloodType?: BloodType;
   allergies?: string;
   medicalHistory?: string;
   emergencyContactName?: string;

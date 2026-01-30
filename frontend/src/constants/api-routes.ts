@@ -15,4 +15,8 @@ export const API = {
   DOCTORS: {
     BASE: `${API_BASE}/doctors`,
   },
+  APPOINTMENTS: {
+    BASE: `${API_BASE}/appointments`,
+    LIST_PATIENT: `${API_BASE}/appointments/patient`,
+  },
 } as const;

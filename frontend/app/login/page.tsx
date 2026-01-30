@@ -7,6 +7,7 @@ import { useAuth } from '@/src/auth/auth.context';
 import { getErrorMessage } from '@/src/utils/api-error';
 import { REGEX } from '@/src/constants/regex.constants';
 import { APP_ROUTES } from '@/src/constants/app-routes';
+import { UserRole } from '@/src/types/user.types';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -95,9 +96,9 @@ export default function LoginPage() {
       const response = await login(formData.email, formData.password);
       const role = response.user.role;
 
-      if (role === 'PATIENT') {
+      if (role === UserRole.PATIENT) {
         router.push(APP_ROUTES.DASHBOARD.PATIENT);
-      } else if (role === 'DOCTOR') {
+      } else if (role === UserRole.DOCTOR) {
         router.push(APP_ROUTES.DASHBOARD.DOCTOR);
       } else {
         router.push(APP_ROUTES.DASHBOARD.BASE);

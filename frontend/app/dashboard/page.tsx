@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/auth/auth.context';
 import { APP_ROUTES } from '@/src/constants/app-routes';
+import { UserRole } from '@/src/types/user.types';
 
 export default function DashboardRedirect() {
     const { user, isAuthenticated, isLoading } = useAuth();
@@ -14,7 +15,7 @@ export default function DashboardRedirect() {
             if (!isAuthenticated) {
                 router.push(APP_ROUTES.AUTH.LOGIN);
             } else {
-                if (user?.role === 'DOCTOR') {
+                if (user?.role === UserRole.DOCTOR) {
                     router.push(APP_ROUTES.DASHBOARD.DOCTOR);
                 } else {
                     router.push(APP_ROUTES.DASHBOARD.PATIENT);

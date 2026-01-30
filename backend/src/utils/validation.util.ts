@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { REGEX } from '../constants/regex.constants';
 import { CITIES, CitySchema, SPECIALTIES, SpecialtySchema, BloodTypeSchema } from '../constants/healthcare.constants';
+import { Role } from '@prisma/client';
 
 // Validation utility functions (keeping them for direct use if needed)
 export const validateEmail = (email: string): boolean => {
@@ -32,7 +33,7 @@ export const registerSchema = z.object({
   firstName: z.string().regex(REGEX.NAME, 'First name must contain only letters and be at least 2 characters'),
   lastName: z.string().regex(REGEX.NAME, 'Last name must contain only letters and be at least 2 characters'),
   phoneNumber: z.string().regex(REGEX.PHONE, 'Invalid phone number format').optional().or(z.literal('')),
-  role: z.enum(['PATIENT', 'DOCTOR']),
+  role: z.nativeEnum(Role),
   city: CitySchema,
 
   // Patient-specific fields
@@ -49,7 +50,7 @@ export const registerSchema = z.object({
   qualification: z.string().optional(),
   consultationFee: z.number().min(0, 'Consultation fee cannot be negative').optional(),
 }).refine((data) => {
-  if (data.role === 'DOCTOR') {
+  if (data.role === Role.DOCTOR) {
     return true; // Additional doctor checks can go here
   }
   return true;

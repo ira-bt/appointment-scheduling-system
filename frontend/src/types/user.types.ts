@@ -1,10 +1,15 @@
+export enum UserRole {
+  PATIENT = 'PATIENT',
+  DOCTOR = 'DOCTOR',
+}
+
 export interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
   phoneNumber?: string;
-  role: 'PATIENT' | 'DOCTOR';
+  role: UserRole;
   city?: string;
   profileImage?: string;
   createdAt: string | Date;
@@ -47,7 +52,7 @@ export interface RegisterRequest {
   firstName: string;
   lastName: string;
   phoneNumber?: string;
-  role: 'PATIENT' | 'DOCTOR';
+  role: UserRole;
   city?: string;
   // Patient-specific fields
   bloodType?: string;
@@ -85,5 +90,5 @@ export interface ChangePasswordRequest {
 export interface TokenPayload {
   userId: string;
   email: string;
-  role: 'PATIENT' | 'DOCTOR';
+  role: UserRole;
 }
