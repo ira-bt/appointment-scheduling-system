@@ -7,6 +7,7 @@ import { useAuth } from '@/src/auth/auth.context';
 import { getErrorMessage } from '@/src/utils/api-error';
 import { REGEX } from '@/src/constants/regex.constants';
 import { APP_ROUTES } from '@/src/constants/app-routes';
+import { UserRole } from '@/src/types/user.types';
 import { CITIES, SPECIALTIES, BLOOD_TYPES } from '@/src/constants/healthcare.constants';
 
 export default function RegisterPage() {
@@ -16,7 +17,7 @@ export default function RegisterPage() {
     firstName: '',
     lastName: '',
     phoneNumber: '',
-    role: 'PATIENT' as 'PATIENT' | 'DOCTOR',
+    role: UserRole.PATIENT,
     city: '',
     // Patient-specific fields
     bloodType: '',
@@ -75,7 +76,7 @@ export default function RegisterPage() {
         if (!value) return 'City is required';
         return '';
       case 'specialty':
-        if (formData.role === 'DOCTOR' && !value) return 'Specialty is required';
+        if (formData.role === UserRole.DOCTOR && !value) return 'Specialty is required';
         return '';
       case 'bloodType':
         return '';
@@ -132,14 +133,14 @@ export default function RegisterPage() {
     }
 
     // Role-specific validations
-    if (formData.role === 'PATIENT') {
+    if (formData.role === UserRole.PATIENT) {
       if (!formData.bloodType) newErrors.bloodType = 'Blood type is required';
       if (formData.emergencyContactPhone && !REGEX.PHONE.test(formData.emergencyContactPhone)) {
         newErrors.emergencyContactPhone = 'Emergency contact phone must be 10 digits';
       }
     }
 
-    if (formData.role === 'DOCTOR') {
+    if (formData.role === UserRole.DOCTOR) {
       if (!formData.specialty) newErrors.specialty = 'Specialty is required';
       if (formData.experience < 0) newErrors.experience = 'Experience cannot be negative';
       if (formData.consultationFee < 0) newErrors.consultationFee = 'Consultation fee cannot be negative';
@@ -186,9 +187,9 @@ export default function RegisterPage() {
       const response = await register(registrationData);
       if (response) {
         const role = response.user.role;
-        if (role === 'PATIENT') {
+        if (role === UserRole.PATIENT) {
           router.push(APP_ROUTES.DASHBOARD.PATIENT);
-        } else if (role === 'DOCTOR') {
+        } else if (role === UserRole.DOCTOR) {
           router.push(APP_ROUTES.DASHBOARD.DOCTOR);
         } else {
           router.push(APP_ROUTES.DASHBOARD.BASE);
@@ -362,8 +363,8 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 required
               >
-                <option value="PATIENT">Patient</option>
-                <option value="DOCTOR">Healthcare Provider</option>
+                <option value={UserRole.PATIENT}>Patient</option>
+                <option value={UserRole.DOCTOR}>Healthcare Provider</option>
               </select>
             </div>
 
@@ -393,7 +394,7 @@ export default function RegisterPage() {
             </div>
 
             {/* Role-specific fields */}
-            {formData.role === 'PATIENT' && (
+            {formData.role === UserRole.PATIENT && (
               <div className="space-y-6 p-6 bg-blue-50 rounded-xl border border-blue-100">
                 <div className="flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -503,7 +504,7 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {formData.role === 'DOCTOR' && (
+            {formData.role === UserRole.DOCTOR && (
               <div className="space-y-6 p-6 bg-green-50 rounded-xl border border-green-100">
                 <div className="flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

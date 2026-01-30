@@ -4,10 +4,11 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/auth/auth.context';
 import { APP_ROUTES } from '@/src/constants/app-routes';
+import { UserRole } from '@/src/types/user.types';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
-    allowedRoles?: ('PATIENT' | 'DOCTOR')[];
+    allowedRoles?: UserRole[];
 }
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
@@ -20,7 +21,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
                 router.push(APP_ROUTES.AUTH.LOGIN);
             } else if (allowedRoles && user && !allowedRoles.includes(user.role)) {
                 // Redirect to their own dashboard if they try to access the other one
-                const targetRoute = user.role === 'PATIENT'
+                const targetRoute = user.role === UserRole.PATIENT
                     ? APP_ROUTES.DASHBOARD.PATIENT
                     : APP_ROUTES.DASHBOARD.DOCTOR;
                 router.push(targetRoute);

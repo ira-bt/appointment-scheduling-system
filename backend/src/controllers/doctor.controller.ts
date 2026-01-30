@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma, Role } from '@prisma/client';
 import { IApiResponse } from '../interfaces/response.interface';
 import { z } from 'zod';
 import { CitySchema, SpecialtySchema } from '../constants/healthcare.constants';
@@ -39,13 +39,13 @@ export class DoctorController {
             const safeLimit = Math.max(1, Math.min(100, limit));
             const skip = (safePage - 1) * safeLimit;
 
-            // Build where clause
-            const where: any = {
-                role: 'DOCTOR',
+            // Build where clause with proper type safety
+            const where: Prisma.UserWhereInput = {
+                role: Role.DOCTOR,
             };
 
-            // Doctor profile filters
-            const profileFilters: any = {};
+            // Doctor profile filters with proper type safety
+            const profileFilters: Prisma.DoctorProfileWhereInput = {};
 
             if (specialty) {
                 profileFilters.specialty = specialty;

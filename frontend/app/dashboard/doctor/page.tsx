@@ -2,12 +2,13 @@
 
 import ProtectedRoute from '@/src/components/auth/ProtectedRoute';
 import { useAuth } from '@/src/auth/auth.context';
+import { UserRole } from '@/src/types/user.types';
 
 export default function DoctorDashboard() {
     const { user, logout } = useAuth();
 
     return (
-        <ProtectedRoute allowedRoles={['DOCTOR']}>
+        <ProtectedRoute allowedRoles={[UserRole.DOCTOR]}>
             <div className="min-h-screen bg-gray-50">
                 {/* Navbar */}
                 <div className="navbar bg-white shadow-sm px-4 lg:px-8">

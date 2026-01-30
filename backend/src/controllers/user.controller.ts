@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, BloodType, Role } from '@prisma/client';
 import crypto from 'crypto';
 import { hashPassword, comparePassword } from '../utils/password.util';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.util';
@@ -68,18 +68,18 @@ export class UserController {
           },
         });
 
-        if (role === 'PATIENT') {
+        if (role === Role.PATIENT) {
           await tx.patientProfile.create({
             data: {
               userId: user.id,
-              bloodType: bloodType as any, // Cast to BloodType enum
+              bloodType, // Use properly typed enum
               allergies,
               medicalHistory,
               emergencyContactName,
               emergencyContactPhone
             },
           });
-        } else if (role === 'DOCTOR') {
+        } else if (role === Role.DOCTOR) {
           await tx.doctorProfile.create({
             data: {
               userId: user.id,

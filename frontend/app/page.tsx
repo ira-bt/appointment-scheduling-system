@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useAuth } from '@/src/auth/auth.context';
 import { APP_ROUTES } from '@/src/constants/app-routes';
+import { UserRole } from '@/src/types/user.types';
 
 export default function HomePage() {
   const { isAuthenticated, user } = useAuth();
@@ -26,7 +27,7 @@ export default function HomePage() {
               <div className="flex items-center space-x-4">
                 <span className="hidden md:inline text-gray-600">Welcome, {user?.firstName}!</span>
                 <Link
-                  href={user?.role === 'DOCTOR' ? APP_ROUTES.DASHBOARD.DOCTOR : APP_ROUTES.DASHBOARD.PATIENT}
+                  href={user?.role === UserRole.DOCTOR ? APP_ROUTES.DASHBOARD.DOCTOR : APP_ROUTES.DASHBOARD.PATIENT}
                   className="btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
                 >
                   Dashboard
@@ -75,7 +76,7 @@ export default function HomePage() {
                   Welcome back, {user?.firstName}! Ready to manage your appointments?
                 </p>
                 <Link
-                  href={user?.role === 'DOCTOR' ? APP_ROUTES.DASHBOARD.DOCTOR : APP_ROUTES.DASHBOARD.PATIENT}
+                  href={user?.role === UserRole.DOCTOR ? APP_ROUTES.DASHBOARD.DOCTOR : APP_ROUTES.DASHBOARD.PATIENT}
                   className="btn bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-medium"
                 >
                   Go to Dashboard

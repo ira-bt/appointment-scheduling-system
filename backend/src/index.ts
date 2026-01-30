@@ -13,6 +13,7 @@ import { API, ROUTES } from './constants/routes';
 import authRoutes from './routes/auth.routes'
 import userRoutes from './routes/user.routes';
 import doctorRoutes from './routes/doctor.routes';
+import appointmentRoutes from './routes/appointment.routes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -42,6 +43,7 @@ app.get('/', (req: Request, res: Response) => {
 app.use(`${API}${ROUTES.AUTH.BASE}`, authRoutes);
 app.use(`${API}${ROUTES.USERS.BASE}`, userRoutes);
 app.use(`${API}${ROUTES.DOCTORS.BASE}`, doctorRoutes);
+app.use(`${API}${ROUTES.APPOINTMENTS.BASE}`, appointmentRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
