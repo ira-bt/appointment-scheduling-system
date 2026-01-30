@@ -3,9 +3,12 @@
 import ProtectedRoute from '@/src/components/auth/ProtectedRoute';
 import { useAuth } from '@/src/auth/auth.context';
 import { UserRole } from '@/src/types/user.types';
+import ManageAvailability from '@/src/components/doctor/ManageAvalability';
+import { useState } from 'react';
 
 export default function DoctorDashboard() {
     const { user, logout } = useAuth();
+    const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
 
     return (
         <ProtectedRoute allowedRoles={[UserRole.DOCTOR]}>
@@ -24,7 +27,7 @@ export default function DoctorDashboard() {
                             </label>
                             <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
                                 <li><a className="justify-between">My Profile</a></li>
-                                <li><a>Availability Settings</a></li>
+                                <li><button onClick={() => setIsAvailabilityModalOpen(true)}>Availability Settings</button></li>
                                 <li><button onClick={logout}>Logout</button></li>
                             </ul>
                         </div>
@@ -38,7 +41,12 @@ export default function DoctorDashboard() {
                             <h1 className="text-3xl font-bold text-gray-800">Welcome back, Dr. {user?.lastName}</h1>
                             <p className="text-gray-600">Here&apos;s an overview of your practice today.</p>
                         </div>
-                        <button className="btn bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Update Availability</button>
+                        <button
+                            onClick={() => setIsAvailabilityModalOpen(true)}
+                            className="btn bg-blue-600 hover:bg-blue-700 text-white rounded-lg border-none shadow-lg shadow-blue-100 px-6"
+                        >
+                            Update Availability
+                        </button>
                     </header>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -94,6 +102,18 @@ export default function DoctorDashboard() {
                         </div>
                     </div>
                 </div>
+
+                {/* Availability Modal */}
+                {isAvailabilityModalOpen && (
+                    <div className="modal modal-open">
+                        <div className="modal-box p-0 max-w-4xl bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-2xl">
+                            <ManageAvailability onClose={() => setIsAvailabilityModalOpen(false)} />
+                        </div>
+                        <form method="dialog" className="modal-backdrop">
+                            <button onClick={() => setIsAvailabilityModalOpen(false)}>close</button>
+                        </form>
+                    </div>
+                )}
             </div>
         </ProtectedRoute>
     );

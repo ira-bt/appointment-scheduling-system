@@ -14,6 +14,8 @@ export const API = {
   },
   DOCTORS: {
     BASE: `${API_BASE}/doctors`,
+    AVAILABILITY: `${API_BASE}/doctors/availability`,
+    SLOTS: (doctorId: string) => `${API_BASE}/doctors/${doctorId}/slots`,
   },
   APPOINTMENTS: {
     BASE: `${API_BASE}/appointments`,
