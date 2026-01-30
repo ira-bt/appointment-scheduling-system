@@ -11,4 +11,5 @@ export const APP_ROUTES = {
     PATIENT: '/dashboard/patient',
     DOCTOR: '/dashboard/doctor',
   },
+  DOCTORS: '/doctors',
 } as const;

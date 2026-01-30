@@ -2,8 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/jwt.util';
 import { PrismaClient } from '@prisma/client';
 import { IApiResponse } from '../interfaces/response.interface';
-
-const prisma = new PrismaClient();
+import prisma from '../config/prisma';
 
 declare global {
   namespace Express {

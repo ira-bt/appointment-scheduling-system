@@ -7,6 +7,7 @@ import { useAuth } from '@/src/auth/auth.context';
 import { getErrorMessage } from '@/src/utils/api-error';
 import { REGEX } from '@/src/constants/regex.constants';
 import { APP_ROUTES } from '@/src/constants/app-routes';
+import { CITIES, SPECIALTIES, BLOOD_TYPES } from '@/src/constants/healthcare.constants';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -16,6 +17,7 @@ export default function RegisterPage() {
     lastName: '',
     phoneNumber: '',
     role: 'PATIENT' as 'PATIENT' | 'DOCTOR',
+    city: '',
     // Patient-specific fields
     bloodType: '',
     allergies: '',
@@ -24,6 +26,7 @@ export default function RegisterPage() {
     emergencyContactPhone: '',
     // Doctor-specific fields
     bio: '',
+    specialty: '',
     experience: 0,
     qualification: '',
     consultationFee: 500,
@@ -67,6 +70,14 @@ export default function RegisterPage() {
         return '';
       case 'consultationFee':
         if (value && (value as number) < 0) return 'Consultation fee cannot be negative';
+        return '';
+      case 'city':
+        if (!value) return 'City is required';
+        return '';
+      case 'specialty':
+        if (formData.role === 'DOCTOR' && !value) return 'Specialty is required';
+        return '';
+      case 'bloodType':
         return '';
       default:
         return '';
@@ -113,6 +124,8 @@ export default function RegisterPage() {
     else if (!REGEX.PASSWORD.test(formData.password))
       newErrors.password = 'Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character, min length 8';
 
+    if (!formData.city) newErrors.city = 'City is required';
+
     // Phone number validation
     if (formData.phoneNumber && !REGEX.PHONE.test(formData.phoneNumber)) {
       newErrors.phoneNumber = 'Phone number must be 10 digits';
@@ -120,12 +133,14 @@ export default function RegisterPage() {
 
     // Role-specific validations
     if (formData.role === 'PATIENT') {
+      if (!formData.bloodType) newErrors.bloodType = 'Blood type is required';
       if (formData.emergencyContactPhone && !REGEX.PHONE.test(formData.emergencyContactPhone)) {
         newErrors.emergencyContactPhone = 'Emergency contact phone must be 10 digits';
       }
     }
 
     if (formData.role === 'DOCTOR') {
+      if (!formData.specialty) newErrors.specialty = 'Specialty is required';
       if (formData.experience < 0) newErrors.experience = 'Experience cannot be negative';
       if (formData.consultationFee < 0) newErrors.consultationFee = 'Consultation fee cannot be negative';
     }
@@ -153,6 +168,7 @@ export default function RegisterPage() {
         lastName: formData.lastName,
         phoneNumber: formData.phoneNumber,
         role: formData.role,
+        city: formData.city,
         // Patient-specific fields
         bloodType: formData.bloodType,
         allergies: formData.allergies,
@@ -161,6 +177,7 @@ export default function RegisterPage() {
         emergencyContactPhone: formData.emergencyContactPhone,
         // Doctor-specific fields
         bio: formData.bio,
+        specialty: formData.specialty,
         experience: formData.experience,
         qualification: formData.qualification,
         consultationFee: formData.consultationFee,
@@ -308,6 +325,34 @@ export default function RegisterPage() {
 
             <div className="form-control">
               <label className="label pb-2">
+                <span className="label-text font-medium text-gray-700">City</span>
+              </label>
+              <select
+                name="city"
+                className={`select select-bordered w-full px-4 py-3 rounded-lg border ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
+                value={formData.city}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select your city</option>
+                {CITIES.map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+              {errors.city && (
+                <label className="label pt-2">
+                  <span className="label-text-alt text-red-500 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {errors.city}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            <div className="form-control">
+              <label className="label pb-2">
                 <span className="label-text font-medium text-gray-700">Role</span>
               </label>
               <select
@@ -369,15 +414,22 @@ export default function RegisterPage() {
                       onChange={handleChange}
                     >
                       <option value="">Select blood type</option>
-                      <option value="A_POS">A+</option>
-                      <option value="A_NEG">A-</option>
-                      <option value="B_POS">B+</option>
-                      <option value="B_NEG">B-</option>
-                      <option value="AB_POS">AB+</option>
-                      <option value="AB_NEG">AB-</option>
-                      <option value="O_POS">O+</option>
-                      <option value="O_NEG">O-</option>
+                      {BLOOD_TYPES.map(type => (
+                        <option key={type} value={type}>
+                          {type.replace('_POS', '+').replace('_NEG', '-')}
+                        </option>
+                      ))}
                     </select>
+                    {errors.bloodType && (
+                      <label className="label pt-2">
+                        <span className="label-text-alt text-red-500 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {errors.bloodType}
+                        </span>
+                      </label>
+                    )}
                   </div>
 
                   <div className="form-control">
@@ -499,6 +551,34 @@ export default function RegisterPage() {
                       onChange={handleChange}
                     />
                   </div>
+                </div>
+
+                <div className="form-control">
+                  <label className="label pb-2">
+                    <span className="label-text font-medium text-gray-700">Specialty</span>
+                  </label>
+                  <select
+                    name="specialty"
+                    className={`select select-bordered w-full px-4 py-3 rounded-lg border ${errors.specialty ? 'border-red-500' : 'border-gray-300'}`}
+                    value={formData.specialty}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select your specialty</option>
+                    {SPECIALTIES.map(specialty => (
+                      <option key={specialty} value={specialty}>{specialty}</option>
+                    ))}
+                  </select>
+                  {errors.specialty && (
+                    <label className="label pt-2">
+                      <span className="label-text-alt text-red-500 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {errors.specialty}
+                      </span>
+                    </label>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

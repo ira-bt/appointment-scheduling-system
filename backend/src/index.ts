@@ -1,16 +1,18 @@
+import dotenv from 'dotenv';
+// Load environment variables immediately
+dotenv.config();
+
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 import { UserController } from './controllers/user.controller';
 import { IApiResponse } from './interfaces/response.interface';
 import { validateRegisterBody, validateLoginBody } from './utils/validation.util';
 import { API, ROUTES } from './constants/routes';
 import authRoutes from './routes/auth.routes'
-import userRoutes from './routes/user.routes'
-// Load environment variables
-dotenv.config();
+import userRoutes from './routes/user.routes';
+import doctorRoutes from './routes/doctor.routes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -39,6 +41,7 @@ app.get('/', (req: Request, res: Response) => {
 // app.post(ROUTES.AUTH.LOGIN, validateLoginBody, UserController.login);
 app.use(`${API}${ROUTES.AUTH.BASE}`, authRoutes);
 app.use(`${API}${ROUTES.USERS.BASE}`, userRoutes);
+app.use(`${API}${ROUTES.DOCTORS.BASE}`, doctorRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

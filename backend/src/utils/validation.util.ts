@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { REGEX } from '../constants/regex.constants';
+import { CITIES, CitySchema, SPECIALTIES, SpecialtySchema, BloodTypeSchema } from '../constants/healthcare.constants';
 
 // Validation utility functions (keeping them for direct use if needed)
 export const validateEmail = (email: string): boolean => {
@@ -32,9 +33,10 @@ export const registerSchema = z.object({
   lastName: z.string().regex(REGEX.NAME, 'Last name must contain only letters and be at least 2 characters'),
   phoneNumber: z.string().regex(REGEX.PHONE, 'Invalid phone number format').optional().or(z.literal('')),
   role: z.enum(['PATIENT', 'DOCTOR']),
+  city: CitySchema,
 
   // Patient-specific fields
-  bloodType: z.enum(['A_POS', 'A_NEG', 'B_POS', 'B_NEG', 'AB_POS', 'AB_NEG', 'O_POS', 'O_NEG']).optional(),
+  bloodType: z.preprocess((val) => (val === '' ? undefined : val), BloodTypeSchema.optional()),
   allergies: z.string().optional(),
   medicalHistory: z.string().optional(),
   emergencyContactName: z.string().optional(),
@@ -42,6 +44,7 @@ export const registerSchema = z.object({
 
   // Doctor-specific fields
   bio: z.string().optional(),
+  specialty: z.preprocess((val) => (val === '' ? undefined : val), SpecialtySchema.optional()),
   experience: z.number().min(0, 'Experience cannot be negative').optional(),
   qualification: z.string().optional(),
   consultationFee: z.number().min(0, 'Consultation fee cannot be negative').optional(),
