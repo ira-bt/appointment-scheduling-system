@@ -7,12 +7,14 @@ import { Role } from '@prisma/client';
 
 const router = Router();
 
-/**
- * @route   GET /api/doctors
- * @desc    Get all doctors with filtering and pagination
- * @access  Protected (Authenticated users)
- */
 router.get(ROUTES.DOCTORS.LIST, protect, DoctorController.getDoctors);
+
+/**
+ * @route   GET /api/doctors/:id
+ * @desc    Get single doctor details
+ * @access  Protected
+ */
+router.get(ROUTES.DOCTORS.DETAILS, protect, DoctorController.getDoctorById);
 
 /**
  * @route   POST /api/doctors/availability
