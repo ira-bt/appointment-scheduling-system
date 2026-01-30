@@ -17,6 +17,7 @@ export const ROUTES = {
   DOCTORS: {
     BASE: '/doctors',
     LIST: '/',
+    DETAILS: '/:id',
     AVAILABILITY: '/availability',
     SLOTS: '/:id/slots',
   },

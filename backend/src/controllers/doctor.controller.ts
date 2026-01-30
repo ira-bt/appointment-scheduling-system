@@ -131,4 +131,44 @@ export class DoctorController {
             next(error);
         }
     }
+
+    /**
+     * Get a single doctor by ID
+     */
+    static async getDoctorById(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const id = req.params.id as string;
+
+            const doctor = await prisma.user.findFirst({
+                where: {
+                    id,
+                    role: Role.DOCTOR,
+                    doctorProfile: { isNot: null }
+                },
+                include: {
+                    doctorProfile: true,
+                },
+            });
+
+            if (!doctor) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Doctor not found',
+                    statusCode: 404,
+                } as IApiResponse);
+                return;
+            }
+
+            const { password, ...doctorWithoutPassword } = doctor;
+
+            res.status(200).json({
+                success: true,
+                message: 'Doctor fetched successfully',
+                data: doctorWithoutPassword,
+                statusCode: 200,
+            } as IApiResponse);
+        } catch (error) {
+            next(error);
+        }
+    }
 }

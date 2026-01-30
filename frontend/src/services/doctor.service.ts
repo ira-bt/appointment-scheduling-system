@@ -63,6 +63,14 @@ export const doctorService = {
     },
 
     /**
+     * Get a single doctor by ID
+     */
+    getDoctorById: async (id: string): Promise<{ success: boolean; data: User & { doctorProfile: DoctorProfile } }> => {
+        const response = await apiClient.get(API.DOCTORS.DETAILS(id));
+        return response.data;
+    },
+
+    /**
      * Get logged-in doctor's current availability schedule
      */
     getAvailability: async (): Promise<AvailabilityResponse> => {
