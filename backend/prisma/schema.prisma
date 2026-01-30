@@ -140,6 +140,7 @@ model Appointment {
   @@index([status])
   @@index([paymentStatus])
   @@index([appointmentStart])
+  @@unique([doctorId, appointmentStart])
 }
 
 enum AppointmentStatus {

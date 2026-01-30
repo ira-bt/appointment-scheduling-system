@@ -91,7 +91,7 @@ export class AvailabilityController {
             const { date } = slotsQuerySchema.parse(req.query);
 
             const targetDate = new Date(date);
-            const dayOfWeek = targetDate.getDay();
+            const dayOfWeek = targetDate.getUTCDay();
 
             // 1. Get doctor's availability for that day
             const availability = await prisma.availability.findFirst({
@@ -112,11 +112,10 @@ export class AvailabilityController {
                 return;
             }
 
-            // 2. Get existing appointments for that doctor on that date
+            // 2. Get existing appointments for that doctor on that date (using UTC boundaries)
             const startOfDay = new Date(date);
-            startOfDay.setHours(0, 0, 0, 0);
             const endOfDay = new Date(date);
-            endOfDay.setHours(23, 59, 59, 999);
+            endOfDay.setUTCHours(23, 59, 59, 999);
 
             const existingAppointments = await prisma.appointment.findMany({
                 where: {
