@@ -21,5 +21,7 @@ export const API = {
   APPOINTMENTS: {
     BASE: `${API_BASE}/appointments`,
     LIST_PATIENT: `${API_BASE}/appointments/patient`,
+    UPLOAD_REPORTS: (id: string) => `${API_BASE}/appointments/${id}/reports`,
+
   },
 } as const;

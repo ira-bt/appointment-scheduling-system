@@ -32,7 +32,7 @@ export const appointmentService = {
             formData.append('reports', file);
         });
 
-        const response = await apiClient.post(`${API.APPOINTMENTS.BASE}/${appointmentId}/reports`, formData, {
+        const response = await apiClient.post(API.APPOINTMENTS.UPLOAD_REPORTS(appointmentId), formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             }

@@ -24,5 +24,7 @@ export const ROUTES = {
   APPOINTMENTS: {
     BASE: '/appointments',
     LIST_PATIENT: '/patient',
+    CREATE: '/',
+    UPLOAD_REPORTS: '/:id/reports',
   },
 };

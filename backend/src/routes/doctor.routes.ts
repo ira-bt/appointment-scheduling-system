@@ -10,19 +10,25 @@ const router = Router();
 router.get(ROUTES.DOCTORS.LIST, protect, DoctorController.getDoctors);
 
 /**
- * @route   GET /api/doctors/:id
- * @desc    Get single doctor details
- * @access  Protected
+ * @route   GET /api/doctors/availability
+ * @desc    Get doctor's weekly availability
+ * @access  Private (Doctor only)
  */
-router.get(ROUTES.DOCTORS.DETAILS, protect, DoctorController.getDoctorById);
+router.get(ROUTES.DOCTORS.AVAILABILITY, protect, restrictTo(Role.DOCTOR), AvailabilityController.getOwnAvailability);
 
 /**
  * @route   POST /api/doctors/availability
  * @desc    Update doctor's weekly availability
  * @access  Private (Doctor only)
  */
-router.get(ROUTES.DOCTORS.AVAILABILITY, protect, restrictTo(Role.DOCTOR), AvailabilityController.getOwnAvailability);
 router.post(ROUTES.DOCTORS.AVAILABILITY, protect, restrictTo(Role.DOCTOR), AvailabilityController.updateAvailability);
+
+/**
+ * @route   GET /api/doctors/:id
+ * @desc    Get single doctor details
+ * @access  Protected
+ */
+router.get(ROUTES.DOCTORS.DETAILS, protect, DoctorController.getDoctorById);
 
 /**
  * @route   GET /api/doctors/:id/slots
