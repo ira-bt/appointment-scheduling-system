@@ -9,6 +9,8 @@ import BookingCalendar from '@/src/components/booking/BookingCalendar';
 import SlotPicker from '@/src/components/booking/SlotPicker';
 import { appointmentService } from '@/src/services/appointment.service';
 import { getErrorMessage } from '@/src/utils/api-error';
+import { ReportUpload } from '@/src/components/booking/ReportUpload';
+import { CheckCircle2 } from 'lucide-react';
 
 function BookingPageContent() {
     const searchParams = useSearchParams();
@@ -21,6 +23,7 @@ function BookingPageContent() {
     const [loading, setLoading] = useState(true);
     const [bookingLoading, setBookingLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [bookedAppointmentId, setBookedAppointmentId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!doctorId) {
@@ -52,13 +55,12 @@ function BookingPageContent() {
             const appointmentDate = new Date(selectedDate);
             appointmentDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-            await appointmentService.createAppointment({
+            const response = await appointmentService.createAppointment({
                 doctorId,
                 appointmentStart: appointmentDate.toISOString()
             });
 
-            // Redirect to dashboard with success message (or show a success state)
-            router.push('/dashboard/patient?booked=true');
+            setBookedAppointmentId(response.data.id);
         } catch (err) {
             alert(getErrorMessage(err));
         } finally {
@@ -91,6 +93,28 @@ function BookingPageContent() {
                     >
                         Go Back
                     </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (bookedAppointmentId) {
+        return (
+            <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="bg-white p-8 rounded-2xl shadow-sm text-center border border-slate-100">
+                        <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <CheckCircle2 className="w-10 h-10 text-green-500" />
+                        </div>
+                        <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Booking Successful!</h2>
+                        <p className="text-slate-500 text-lg">Your appointment with Dr. {doctor.firstName} {doctor.lastName} is now pending approval.</p>
+                    </div>
+
+                    <ReportUpload
+                        appointmentId={bookedAppointmentId}
+                        onSuccess={() => router.push('/dashboard/patient?booked=true')}
+                        onCancel={() => router.push('/dashboard/patient?booked=true')}
+                    />
                 </div>
             </div>
         );

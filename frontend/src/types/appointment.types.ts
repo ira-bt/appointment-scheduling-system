@@ -1,5 +1,16 @@
 import { User, DoctorProfile } from './user.types';
 
+export interface MedicalReport {
+    id: string;
+    appointmentId: string;
+    patientId: string;
+    fileName: string;
+    fileUrl: string;
+    fileType: string;
+    fileSize: number;
+    createdAt: string | Date;
+}
+
 export enum AppointmentStatus {
     PENDING = 'PENDING',
     APPROVED = 'APPROVED',
@@ -26,6 +37,7 @@ export interface Appointment {
         doctorProfile: DoctorProfile;
     };
     patient?: User;
+    medicalReports?: MedicalReport[];
 }
 
 export interface AppointmentQueryParams {

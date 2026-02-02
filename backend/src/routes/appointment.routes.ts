@@ -3,6 +3,7 @@ import { Role } from '@prisma/client';
 import { AppointmentController } from '../controllers/appointment.controller';
 import { protect, restrictTo } from '../middleware/auth.middleware';
 import { ROUTES } from '../constants/routes';
+import { upload } from '../middleware/upload.middleware';
 
 const router = Router();
 
@@ -29,6 +30,18 @@ router.post(
     '/',
     restrictTo(Role.PATIENT),
     AppointmentController.createAppointment
+);
+
+/**
+ * @route   POST /api/appointments/:id/reports
+ * @desc    Upload medical reports for an appointment
+ * @access  Private (Patient only)
+ */
+router.post(
+    '/:id/reports',
+    restrictTo(Role.PATIENT),
+    upload.array('reports', 5), // Max 5 files
+    AppointmentController.uploadMedicalReports
 );
 
 export default router;
