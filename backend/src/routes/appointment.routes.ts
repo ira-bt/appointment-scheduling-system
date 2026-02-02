@@ -33,6 +33,28 @@ router.post(
 );
 
 /**
+ * @route   GET /api/appointments/doctor
+ * @desc    Get appointments for the logged-in doctor
+ * @access  Private (Doctor only)
+ */
+router.get(
+    ROUTES.APPOINTMENTS.LIST_DOCTOR,
+    restrictTo(Role.DOCTOR),
+    AppointmentController.getDoctorAppointments
+);
+
+/**
+ * @route   PATCH /api/appointments/:id/status
+ * @desc    Update appointment status (Approve/Reject)
+ * @access  Private (Doctor only)
+ */
+router.patch(
+    ROUTES.APPOINTMENTS.UPDATE_STATUS,
+    restrictTo(Role.DOCTOR),
+    AppointmentController.updateAppointmentStatus
+);
+
+/**
  * @route   POST /api/appointments/:id/reports
  * @desc    Upload medical reports for an appointment
  * @access  Private (Patient only)
