@@ -27,7 +27,7 @@ router.get(
  * @access  Private (Patient only)
  */
 router.post(
-    '/',
+    ROUTES.APPOINTMENTS.CREATE,
     restrictTo(Role.PATIENT),
     AppointmentController.createAppointment
 );
@@ -38,7 +38,7 @@ router.post(
  * @access  Private (Patient only)
  */
 router.post(
-    '/:id/reports',
+    ROUTES.APPOINTMENTS.UPLOAD_REPORTS,
     restrictTo(Role.PATIENT),
     upload.array('reports', 5), // Max 5 files
     AppointmentController.uploadMedicalReports

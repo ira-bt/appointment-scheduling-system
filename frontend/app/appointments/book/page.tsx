@@ -11,6 +11,7 @@ import { appointmentService } from '@/src/services/appointment.service';
 import { getErrorMessage } from '@/src/utils/api-error';
 import { ReportUpload } from '@/src/components/booking/ReportUpload';
 import { CheckCircle2 } from 'lucide-react';
+import { APP_ROUTES } from '@/src/constants/app-routes';
 
 function BookingPageContent() {
     const searchParams = useSearchParams();
@@ -27,7 +28,7 @@ function BookingPageContent() {
 
     useEffect(() => {
         if (!doctorId) {
-            router.push('/dashboard/patient');
+            router.push(APP_ROUTES.DASHBOARD.PATIENT);
             return;
         }
 
@@ -112,8 +113,8 @@ function BookingPageContent() {
 
                     <ReportUpload
                         appointmentId={bookedAppointmentId}
-                        onSuccess={() => router.push('/dashboard/patient?booked=true')}
-                        onCancel={() => router.push('/dashboard/patient?booked=true')}
+                        onSuccess={() => router.push(`${APP_ROUTES.DASHBOARD.PATIENT}?booked=true`)}
+                        onCancel={() => router.push(`${APP_ROUTES.DASHBOARD.PATIENT}?booked=true`)}
                     />
                 </div>
             </div>
