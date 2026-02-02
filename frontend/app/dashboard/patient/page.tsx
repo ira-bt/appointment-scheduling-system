@@ -72,9 +72,17 @@ export default function PatientDashboard() {
 
                 {/* Content */}
                 <div className="p-4 lg:p-8 max-w-5xl mx-auto w-full flex-grow">
-                    <header className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-800">Hello, {user?.firstName}!</h1>
-                        <p className="text-gray-600">Manage your appointments and healthcare needs.</p>
+                    <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-800">Hello, {user?.firstName}!</h1>
+                            <p className="text-gray-600">Manage your appointments and healthcare needs.</p>
+                        </div>
+                        <Link
+                            href={APP_ROUTES.DOCTORS}
+                            className="btn bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-lg shadow-md border-none w-full md:w-auto"
+                        >
+                            Book New Appointment
+                        </Link>
                     </header>
 
                     {/* Quick Stats */}

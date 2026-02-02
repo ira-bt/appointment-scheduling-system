@@ -11,7 +11,8 @@ type AppointmentWithDoctor = Prisma.AppointmentGetPayload<{
             include: {
                 user: true
             }
-        }
+        },
+        medicalReports: true
     }
 }>;
 
@@ -27,7 +28,8 @@ type AppointmentWithDoctorMinimal = Prisma.AppointmentGetPayload<{
                     }
                 }
             }
-        }
+        },
+        medicalReports: true
     }
 }>;
 
@@ -138,7 +140,8 @@ export class AppointmentController {
                             include: {
                                 user: true
                             }
-                        }
+                        },
+                        medicalReports: true
                     }
                 });
 
@@ -261,7 +264,8 @@ export class AppointmentController {
                                     }
                                 }
                             }
-                        }
+                        },
+                        medicalReports: true
                     },
                     orderBy: {
                         appointmentStart: type === 'past' ? 'desc' : 'asc',
@@ -315,6 +319,72 @@ export class AppointmentController {
                 return;
             }
             next(error);
+        }
+    }
+
+    /**
+     * Upload medical reports for an appointment
+     */
+    static async uploadMedicalReports(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const appointmentId = req.params.id as string;
+            const patientId = req.user.id as string;
+            const files = req.files as Express.Multer.File[];
+
+            if (!files || files.length === 0) {
+                res.status(400).json({
+                    success: false,
+                    message: 'No files uploaded',
+                    statusCode: 400,
+                } as IApiResponse);
+                return;
+            }
+
+            // 1. Verify appointment exists and belongs to this patient
+            const appointment = await prisma.appointment.findFirst({
+                where: {
+                    id: appointmentId,
+                    patientId: patientId,
+                }
+            });
+
+            if (!appointment) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Appointment not found or unauthorized',
+                    statusCode: 404,
+                } as IApiResponse);
+                return;
+            }
+
+            // 2. Save file metadata to database
+            const reports = await prisma.$transaction(
+                files.map(file => prisma.medicalReport.create({
+                    data: {
+                        appointmentId,
+                        patientId,
+                        fileName: file.originalname,
+                        fileUrl: file.path, // Cloudinary URL
+                        fileType: file.mimetype,
+                        fileSize: file.size,
+                    }
+                }))
+            );
+
+            res.status(201).json({
+                success: true,
+                message: `${reports.length} report(s) uploaded successfully`,
+                data: reports,
+                statusCode: 201,
+            } as IApiResponse);
+
+        } catch (error: unknown) {
+            console.error('Error in uploadMedicalReports:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to upload reports',
+                statusCode: 500,
+            } as IApiResponse);
         }
     }
 }

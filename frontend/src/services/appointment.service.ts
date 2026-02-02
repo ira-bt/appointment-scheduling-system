@@ -21,5 +21,22 @@ export const appointmentService = {
     getPatientAppointments: async (params?: { type?: 'upcoming' | 'past'; page?: number; limit?: number }) => {
         const response = await apiClient.get(API.APPOINTMENTS.LIST_PATIENT, { params });
         return response.data;
+    },
+
+    /**
+     * Upload medical reports for an appointment
+     */
+    uploadReports: async (appointmentId: string, files: File[]) => {
+        const formData = new FormData();
+        files.forEach(file => {
+            formData.append('reports', file);
+        });
+
+        const response = await apiClient.post(`${API.APPOINTMENTS.BASE}/${appointmentId}/reports`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        });
+        return response.data;
     }
 };

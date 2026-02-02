@@ -54,6 +54,28 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
                 </div>
             </div>
 
+            {appointment.medicalReports && appointment.medicalReports.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-50 w-full">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Medical Reports</p>
+                    <div className="flex flex-wrap gap-2">
+                        {appointment.medicalReports.map((report) => (
+                            <a
+                                key={report.id}
+                                href={report.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-xs font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                {report.fileName}
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className="flex flex-row md:flex-col items-center md:items-end gap-3 w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-50">
                 <span className={`px-3 py-1 rounded-full text-xs font-bold border ${statusColor}`}>
                     {appointment.status}
