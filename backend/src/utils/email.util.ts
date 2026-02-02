@@ -137,6 +137,104 @@ class EmailService {
   }
 
   /**
+   * Send appointment approval email to patient
+   */
+  public async sendAppointmentApproval(
+    patientEmail: string,
+    patientName: string,
+    date: string,
+    time: string
+  ): Promise<boolean> {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          .container { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px; }
+          .header { background-color: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { padding: 20px; line-height: 1.6; color: #374151; }
+          .details { background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0; }
+          .footer { text-align: center; font-size: 0.875rem; color: #6b7280; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Appointment Approved</h1>
+          </div>
+          <div class="content">
+            <p>Hi <strong>${patientName}</strong>,</p>
+            <p>Your appointment request has been approved by the doctor.</p>
+            <div class="details">
+              <p><strong>Date:</strong> ${date}</p>
+              <p><strong>Time:</strong> ${time}</p>
+            </div>
+            <p>Please log in to your dashboard to complete the payment (if applicable) and confirm your visit.</p>
+            <p>Best regards,<br />The MediScheduler Team</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2026 MediScheduler. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return await this.sendEmail({
+      to: patientEmail,
+      subject: 'Appointment Approved - MediScheduler',
+      html,
+      text: `Hello ${patientName}, your appointment request for ${date} at ${time} has been approved.`,
+    });
+  }
+
+  /**
+   * Send appointment rejection email to patient
+   */
+  public async sendAppointmentRejection(
+    patientEmail: string,
+    patientName: string,
+    date: string
+  ): Promise<boolean> {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          .container { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px; }
+          .header { background-color: #ef4444; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { padding: 20px; line-height: 1.6; color: #374151; }
+          .footer { text-align: center; font-size: 0.875rem; color: #6b7280; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Appointment Not Approved</h1>
+          </div>
+          <div class="content">
+            <p>Hi <strong>${patientName}</strong>,</p>
+            <p>We're sorry to inform you that your appointment request for <strong>${date}</strong> could not be accepted at this time.</p>
+            <p>This may be due to an unexpected scheduling conflict. You can try booking another slot or choosing a different doctor.</p>
+            <p>Best regards,<br />The MediScheduler Team</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2026 MediScheduler. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return await this.sendEmail({
+      to: patientEmail,
+      subject: 'Update on Your Appointment Request - MediScheduler',
+      html,
+      text: `Hello ${patientName}, unfortunately your appointment request for ${date} could not be accepted.`,
+    });
+  }
+
+  /**
    * Send booking confirmation email to doctor
    */
   public async sendBookingConfirmation(

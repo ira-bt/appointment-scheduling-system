@@ -33,9 +33,45 @@ type AppointmentWithDoctorMinimal = Prisma.AppointmentGetPayload<{
     }
 }>;
 
+type AppointmentWithPatientFull = Prisma.AppointmentGetPayload<{
+    include: {
+        patient: {
+            include: {
+                user: true
+            }
+        }
+    }
+}>;
+
+type AppointmentWithPatient = Prisma.AppointmentGetPayload<{
+    include: {
+        patient: {
+            include: {
+                user: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                        phoneNumber: true,
+                        profileImage: true,
+                    }
+                }
+            }
+        },
+        medicalReports: true
+    }
+}>;
+
 // Validation schema for patient appointments query
 export const patientAppointmentQuerySchema = z.object({
     type: z.enum(['upcoming', 'past']).optional(),
+    page: z.coerce.number().min(1).default(1),
+    limit: z.coerce.number().min(1).max(100).default(10),
+});
+
+// Validation schema for doctor appointments query
+export const doctorAppointmentQuerySchema = z.object({
+    status: z.nativeEnum(AppointmentStatus).optional(),
     page: z.coerce.number().min(1).default(1),
     limit: z.coerce.number().min(1).max(100).default(10),
 });
@@ -46,6 +82,11 @@ export const createAppointmentSchema = z.object({
     appointmentStart: z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: "Invalid date format",
     }),
+});
+
+// Validation schema for updating appointment status
+export const updateAppointmentStatusSchema = z.object({
+    status: z.enum([AppointmentStatus.APPROVED, AppointmentStatus.REJECTED]),
 });
 
 export class AppointmentController {
@@ -385,6 +426,165 @@ export class AppointmentController {
                 message: 'Failed to upload reports',
                 statusCode: 500,
             } as IApiResponse);
+        }
+    }
+
+    /**
+     * Get appointments for the logged-in doctor
+     */
+    static async getDoctorAppointments(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const doctorId = req.user.id;
+            const { status, page, limit } = doctorAppointmentQuerySchema.parse(req.query);
+
+            const skip = (page - 1) * limit;
+
+            const where: Prisma.AppointmentWhereInput = {
+                doctorId,
+            };
+
+            if (status) {
+                where.status = status;
+            }
+
+            const [appointments, total] = await Promise.all([
+                prisma.appointment.findMany({
+                    where,
+                    include: {
+                        patient: {
+                            include: {
+                                user: {
+                                    select: {
+                                        firstName: true,
+                                        lastName: true,
+                                        email: true,
+                                        phoneNumber: true,
+                                        profileImage: true,
+                                    }
+                                }
+                            }
+                        },
+                        medicalReports: true,
+                    },
+                    orderBy: {
+                        appointmentStart: 'desc',
+                    },
+                    skip,
+                    take: limit,
+                }),
+                prisma.appointment.count({ where }),
+            ]);
+
+            // Flatten patient data
+            const formattedAppointments = (appointments as AppointmentWithPatient[]).map(app => {
+                const { patient, ...rest } = app;
+                return {
+                    ...rest,
+                    patient: {
+                        ...patient.user,
+                        bloodType: patient.bloodType,
+                        allergies: patient.allergies,
+                        medicalHistory: patient.medicalHistory,
+                    }
+                };
+            });
+
+            res.status(200).json({
+                success: true,
+                message: 'Doctor appointments fetched successfully',
+                data: {
+                    appointments: formattedAppointments,
+                    pagination: {
+                        total,
+                        page,
+                        limit,
+                        totalPages: Math.ceil(total / limit),
+                    }
+                },
+                statusCode: 200,
+            } as IApiResponse);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Update appointment status (Doctor only)
+     */
+    static async updateAppointmentStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const doctorId = req.user.id;
+            const appointmentId = req.params.id as string;
+            const { status } = updateAppointmentStatusSchema.parse(req.body);
+
+            // 1. Verify appointment belongs to this doctor and is in PENDING state
+            const appointment = await prisma.appointment.findFirst({
+                where: {
+                    id: appointmentId,
+                    doctorId,
+                },
+                include: {
+                    patient: {
+                        include: {
+                            user: true
+                        }
+                    }
+                }
+            }) as AppointmentWithPatientFull | null;
+
+            if (!appointment) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Appointment not found or unauthorized',
+                    statusCode: 404,
+                } as IApiResponse);
+                return;
+            }
+
+            if (appointment.status !== AppointmentStatus.PENDING) {
+                res.status(400).json({
+                    success: false,
+                    message: `Cannot update status from ${appointment.status}`,
+                    statusCode: 400,
+                } as IApiResponse);
+                return;
+            }
+
+            // 2. Update status
+            const updatedAppointment = await prisma.appointment.update({
+                where: { id: appointmentId },
+                data: { status },
+            });
+
+            // 3. Trigger Email Notification (Asynchronous)
+            const emailService = require('../utils/email.util').default;
+            const timeStr = new Date(appointment.appointmentStart).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = new Date(appointment.appointmentStart).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            if (status === AppointmentStatus.APPROVED) {
+                emailService.sendAppointmentApproval(
+                    appointment.patient.user.email,
+                    appointment.patient.user.firstName,
+                    dateStr,
+                    timeStr
+                ).catch((err: unknown) => console.error('Approval email failed:', err));
+            } else if (status === AppointmentStatus.REJECTED) {
+                emailService.sendAppointmentRejection(
+                    appointment.patient.user.email,
+                    appointment.patient.user.firstName,
+                    dateStr
+                ).catch((err: unknown) => console.error('Rejection email failed:', err));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: `Appointment ${status.toLowerCase()} successfully`,
+                data: updatedAppointment,
+                statusCode: 200,
+            } as IApiResponse);
+
+        } catch (error) {
+            next(error);
         }
     }
 }
