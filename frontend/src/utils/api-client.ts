@@ -7,7 +7,7 @@ const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhos
 
 export const apiClient = axios.create({
     baseURL: BACKEND_BASE_URL,
-    timeout: 10000,
+    timeout: 30000,
     headers: {
         'Content-Type': 'application/json',
     },
