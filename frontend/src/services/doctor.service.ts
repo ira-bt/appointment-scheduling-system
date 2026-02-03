@@ -1,6 +1,7 @@
 import { apiClient } from '@/src/utils/api-client';
 import { API } from '../constants/api-routes';
 import { User, DoctorProfile } from '../types/user.types';
+import { AppointmentStatus } from '../types/appointment.types';
 
 export interface DoctorQueryParams {
     specialty?: string;
@@ -93,4 +94,19 @@ export const doctorService = {
         const response = await apiClient.get(API.DOCTORS.SLOTS(doctorId), { params: { date } });
         return response.data;
     },
+    /**
+     * Get appointments for the logged-in doctor
+     */
+    getAppointments: async (params?: { status?: AppointmentStatus; page?: number; limit?: number }) => {
+        const response = await apiClient.get(API.APPOINTMENTS.LIST_DOCTOR, { params });
+        return response.data;
+    },
+
+    /**
+     * Update appointment status (Approve/Reject)
+     */
+    updateAppointmentStatus: async (appointmentId: string, status: AppointmentStatus.APPROVED | AppointmentStatus.REJECTED) => {
+        const response = await apiClient.patch(API.APPOINTMENTS.UPDATE_STATUS(appointmentId), { status });
+        return response.data;
+    }
 };

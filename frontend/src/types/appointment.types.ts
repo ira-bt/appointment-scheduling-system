@@ -26,6 +26,7 @@ export interface Appointment {
     doctorId: string;
     appointmentStart: string | Date;
     appointmentEnd: string | Date;
+    durationMinutes: number;
     status: AppointmentStatus;
     reason?: string;
     notes?: string;
@@ -36,7 +37,17 @@ export interface Appointment {
     doctor?: User & {
         doctorProfile: DoctorProfile;
     };
-    patient?: User;
+    patient?: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        phoneNumber?: string;
+        profileImage?: string;
+        bloodType?: string;
+        allergies?: string;
+        medicalHistory?: string;
+    };
     medicalReports?: MedicalReport[];
 }
 
