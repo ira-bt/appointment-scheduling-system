@@ -7,9 +7,7 @@ const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'medical-reports',
-        resource_type: 'image',
-        allowed_formats: ['pdf', 'jpg', 'jpeg', 'png'],
-        flags: 'attachment:false',
+        resource_type: 'auto',
         use_filename: true,
         unique_filename: true,
     } as any,
