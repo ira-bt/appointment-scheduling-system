@@ -20,6 +20,7 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
     const doctorName = doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'Unknown Doctor';
     const specialty = doctor?.doctorProfile?.specialty || 'General';
     const statusColor = statusColors[appointment.status] || 'bg-gray-100 text-gray-800';
+    const isPast = new Date(appointment.appointmentStart) < new Date();
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:shadow-md transition-shadow">
@@ -82,8 +83,8 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
                 </span>
                 <div className="flex gap-2">
                     <button className="btn btn-sm btn-outline border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg">Details</button>
-                    {appointment.status === AppointmentStatus.PENDING && (
-                        <button className="btn btn-sm btn-error btn-outline rounded-lg">Cancel</button>
+                    {appointment.status === AppointmentStatus.APPROVED && !isPast && (
+                        <button className="btn btn-sm btn-primary rounded-lg shadow-sm">Pay Now</button>
                     )}
                 </div>
             </div>
