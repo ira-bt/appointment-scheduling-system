@@ -4,14 +4,14 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import ProtectedRoute from '@/src/components/auth/ProtectedRoute';
 import { UserRole, User, DoctorProfile } from '@/src/types/user.types';
+import { APP_ROUTES } from '@/src/constants/app-routes';
 import { doctorService } from '@/src/services/doctor.service';
 import BookingCalendar from '@/src/components/booking/BookingCalendar';
 import SlotPicker from '@/src/components/booking/SlotPicker';
 import { appointmentService } from '@/src/services/appointment.service';
 import { getErrorMessage } from '@/src/utils/api-error';
 import { ReportUpload } from '@/src/components/booking/ReportUpload';
-import { CheckCircle2 } from 'lucide-react';
-import { APP_ROUTES } from '@/src/constants/app-routes';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 
 function BookingPageContent() {
     const searchParams = useSearchParams();
@@ -193,9 +193,14 @@ function BookingPageContent() {
                             <button
                                 onClick={handleBooking}
                                 disabled={bookingLoading}
-                                className={`btn btn-primary btn-lg px-12 rounded-2xl shadow-xl shadow-blue-100 w-full md:w-auto ${bookingLoading ? 'loading' : ''}`}
+                                className="btn btn-primary btn-lg px-12 rounded-2xl shadow-xl shadow-blue-100 w-full md:w-auto min-w-[200px] flex items-center justify-center gap-2"
                             >
-                                {bookingLoading ? 'Booking Now...' : 'Confirm Booking'}
+                                {bookingLoading ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        <span>Booking Now...</span>
+                                    </>
+                                ) : 'Confirm Booking'}
                             </button>
                         </div>
                     </div>

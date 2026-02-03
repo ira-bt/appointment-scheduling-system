@@ -240,11 +240,11 @@ export default function RegisterPage() {
                 />
                 {errors.firstName && (
                   <label className="label pt-2">
-                    <span className="label-text-alt text-red-500 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <span className="label-text-alt text-red-500 flex items-start whitespace-normal">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      {errors.firstName}
+                      <span>{errors.firstName}</span>
                     </span>
                   </label>
                 )}
@@ -264,11 +264,11 @@ export default function RegisterPage() {
                 />
                 {errors.lastName && (
                   <label className="label pt-2">
-                    <span className="label-text-alt text-red-500 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <span className="label-text-alt text-red-500 flex items-start whitespace-normal">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      {errors.lastName}
+                      <span>{errors.lastName}</span>
                     </span>
                   </label>
                 )}
@@ -290,11 +290,11 @@ export default function RegisterPage() {
               />
               {errors.email && (
                 <label className="label pt-2">
-                  <span className="label-text-alt text-red-500 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <span className="label-text-alt text-red-500 flex items-start whitespace-normal">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    {errors.email}
+                    <span>{errors.email}</span>
                   </span>
                 </label>
               )}
@@ -314,11 +314,11 @@ export default function RegisterPage() {
               />
               {errors.phoneNumber && (
                 <label className="label pt-2">
-                  <span className="label-text-alt text-red-500 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <span className="label-text-alt text-red-500 flex items-start whitespace-normal">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    {errors.phoneNumber}
+                    <span>{errors.phoneNumber}</span>
                   </span>
                 </label>
               )}
@@ -342,11 +342,11 @@ export default function RegisterPage() {
               </select>
               {errors.city && (
                 <label className="label pt-2">
-                  <span className="label-text-alt text-red-500 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <span className="label-text-alt text-red-500 flex items-start whitespace-normal">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    {errors.city}
+                    <span>{errors.city}</span>
                   </span>
                 </label>
               )}
@@ -383,11 +383,11 @@ export default function RegisterPage() {
               />
               {errors.password && (
                 <label className="label pt-2">
-                  <span className="label-text-alt text-red-500 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <span className="label-text-alt text-red-500 flex items-start whitespace-normal">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    {errors.password}
+                    <span>{errors.password}</span>
                   </span>
                 </label>
               )}
@@ -423,11 +423,11 @@ export default function RegisterPage() {
                     </select>
                     {errors.bloodType && (
                       <label className="label pt-2">
-                        <span className="label-text-alt text-red-500 flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <span className="label-text-alt text-red-500 flex items-start whitespace-normal">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          {errors.bloodType}
+                          <span>{errors.bloodType}</span>
                         </span>
                       </label>
                     )}
@@ -463,11 +463,11 @@ export default function RegisterPage() {
                     />
                     {errors.emergencyContactPhone && (
                       <label className="label pt-2">
-                        <span className="label-text-alt text-red-500 flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <span className="label-text-alt text-red-500 flex items-start whitespace-normal">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          {errors.emergencyContactPhone}
+                          <span>{errors.emergencyContactPhone}</span>
                         </span>
                       </label>
                     )}
@@ -529,11 +529,11 @@ export default function RegisterPage() {
                     />
                     {errors.experience && (
                       <label className="label pt-2">
-                        <span className="label-text-alt text-red-500 flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <span className="label-text-alt text-red-500 flex items-start whitespace-normal">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          {errors.experience}
+                          <span>{errors.experience}</span>
                         </span>
                       </label>
                     )}
@@ -572,11 +572,11 @@ export default function RegisterPage() {
                   </select>
                   {errors.specialty && (
                     <label className="label pt-2">
-                      <span className="label-text-alt text-red-500 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <span className="label-text-alt text-red-500 flex items-start whitespace-normal">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        {errors.specialty}
+                        <span>{errors.specialty}</span>
                       </span>
                     </label>
                   )}
@@ -598,11 +598,11 @@ export default function RegisterPage() {
                     />
                     {errors.consultationFee && (
                       <label className="label pt-2">
-                        <span className="label-text-alt text-red-500 flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <span className="label-text-alt text-red-500 flex items-start whitespace-normal">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          {errors.consultationFee}
+                          <span>{errors.consultationFee}</span>
                         </span>
                       </label>
                     )}

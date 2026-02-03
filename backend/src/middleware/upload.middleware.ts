@@ -7,12 +7,11 @@ const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'medical-reports',
-        allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
-        // Use a unique filename
-        public_id: (req: Request, file: Express.Multer.File) => {
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-            return `${file.fieldname}-${uniqueSuffix}`;
-        }
+        resource_type: 'image',
+        allowed_formats: ['pdf', 'jpg', 'jpeg', 'png'],
+        flags: 'attachment:false',
+        use_filename: true,
+        unique_filename: true,
     } as any,
 });
 
