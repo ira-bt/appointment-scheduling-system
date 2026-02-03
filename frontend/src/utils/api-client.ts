@@ -7,7 +7,7 @@ const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhos
 
 export const apiClient = axios.create({
     baseURL: BACKEND_BASE_URL,
-    timeout: 10000,
+    timeout: 30000,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -32,7 +32,10 @@ apiClient.interceptors.response.use(
         const originalRequest = error.config;
 
         // If error is 401 and we haven't retried yet
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Also skip redirect if we are on login/register endpoints
+        const isAuthEndpoint = originalRequest.url?.includes(API.AUTH.LOGIN) || originalRequest.url?.includes(API.AUTH.REGISTER);
+
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
             originalRequest._retry = true;
 
             try {

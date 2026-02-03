@@ -112,36 +112,46 @@ export class AppointmentController {
                 return;
             }
 
-            // Execute in transaction to prevent race conditions
+            // 1. Check if doctor exists and get their user info (Outside transaction)
+            const doctorProfile = await prisma.doctorProfile.findFirst({
+                where: { userId: doctorId },
+                include: { user: true }
+            });
+
+            if (!doctorProfile) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Doctor not found or profile incomplete',
+                    statusCode: 404,
+                } as IApiResponse);
+                return;
+            }
+
+            // 2. Check if doctor has availability for this day/time (Outside transaction)
+            const dayOfWeek = requestedStart.getDay();
+            const timeString = requestedStart.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+            const availability = await prisma.availability.findFirst({
+                where: {
+                    doctorId,
+                    dayOfWeek,
+                    isActive: true,
+                    startTime: { lte: timeString },
+                    endTime: { gte: timeString }
+                }
+            });
+
+            if (!availability) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Doctor is not available at this time',
+                    statusCode: 400,
+                } as IApiResponse);
+                return;
+            }
+
+            // Execute in transaction to prevent race conditions (Critical section only)
             const result = await prisma.$transaction(async (tx) => {
-                // 1. Check if doctor exists and get their user info
-                const doctorProfile = await tx.doctorProfile.findFirst({
-                    where: { userId: doctorId },
-                    include: { user: true }
-                });
-
-                if (!doctorProfile) {
-                    throw new Error('Doctor not found or profile incomplete');
-                }
-
-                // 2. Check if doctor has availability for this day/time
-                const dayOfWeek = requestedStart.getDay();
-                const timeString = requestedStart.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-                const availability = await tx.availability.findFirst({
-                    where: {
-                        doctorId,
-                        dayOfWeek,
-                        isActive: true,
-                        startTime: { lte: timeString },
-                        endTime: { gte: timeString }
-                    }
-                });
-
-                if (!availability) {
-                    throw new Error('Doctor is not available at this time');
-                }
-
                 // 3. Robust overlap check
                 const startOfDay = new Date(requestedStart);
                 startOfDay.setHours(0, 0, 0, 0);
@@ -187,6 +197,9 @@ export class AppointmentController {
                 });
 
                 return appointment;
+            }, {
+                maxWait: 5000, // 5s to acquire a connection
+                timeout: 10000, // 10s for the transaction to complete
             });
 
             // 5. Send Email Notification (Non-blocking)
@@ -399,6 +412,12 @@ export class AppointmentController {
             }
 
             // 2. Save file metadata to database
+            console.log('Finalizing upload for files:', files.map(f => ({
+                name: f.originalname,
+                fullPath: f.path,
+                mimetype: f.mimetype
+            })));
+
             const reports = await prisma.$transaction(
                 files.map(file => prisma.medicalReport.create({
                     data: {

@@ -152,7 +152,7 @@ export default function DoctorDiscoveryPage() {
                                     </div>
 
                                     <button
-                                        onClick={() => setFilters({ page: 1, limit: 6, specialty: '', city: '', search: '' })}
+                                        onClick={() => setFilters({ page: 1, limit: 4, specialty: '', city: '', search: '' })}
                                         className="btn btn-outline btn-sm w-full mt-4"
                                     >
                                         Clear Filters
@@ -233,7 +233,7 @@ export default function DoctorDiscoveryPage() {
                                     <h3 className="text-xl font-bold text-gray-800 mb-2">No Doctors Found</h3>
                                     <p className="text-gray-600 mb-8 max-w-sm mx-auto">We couldn&apos;t find any healthcare providers matching your current search or filters. Try adjusting your criteria.</p>
                                     <button
-                                        onClick={() => setFilters({ page: 1, limit: 6, specialty: '', city: '', search: '' })}
+                                        onClick={() => setFilters({ page: 1, limit: 4, specialty: '', city: '', search: '' })}
                                         className="btn btn-primary px-8"
                                     >
                                         Clear All Filters

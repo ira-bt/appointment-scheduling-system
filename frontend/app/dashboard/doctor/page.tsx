@@ -232,8 +232,8 @@ export default function DoctorDashboard() {
 
                 {/* Availability Modal */}
                 {isAvailabilityModalOpen && (
-                    <div className="modal modal-open">
-                        <div className="modal-box p-0 max-w-4xl bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-2xl">
+                    <div className="modal modal-open px-4">
+                        <div className="modal-box p-0 max-w-4xl h-[85vh] bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-2xl">
                             <ManageAvailability onClose={() => setIsAvailabilityModalOpen(false)} />
                         </div>
                         <form method="dialog" className="modal-backdrop">
