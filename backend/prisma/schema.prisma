@@ -149,6 +149,7 @@ enum AppointmentStatus {
   REJECTED // Doctor rejected
   CONFIRMED // Payment done
   COMPLETED // Appointment happened
+  CANCELLED // Cancelled by system or user
 }
 
 enum PaymentStatus {

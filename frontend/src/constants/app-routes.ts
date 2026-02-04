@@ -15,4 +15,8 @@ export const APP_ROUTES = {
   APPOINTMENTS: {
     BOOK: '/appointments/book',
   },
+  PAYMENT: {
+    SUCCESS: '/payment/success',
+    CANCEL: '/payment/cancel',
+  },
 } as const;

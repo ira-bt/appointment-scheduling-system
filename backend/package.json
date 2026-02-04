@@ -27,6 +27,7 @@
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^7.0.12",
+    "stripe": "^20.3.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

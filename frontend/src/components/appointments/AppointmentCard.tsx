@@ -1,6 +1,10 @@
 import { Appointment, AppointmentStatus } from '@/src/types/appointment.types';
 import { formatDate, formatTime } from '@/src/utils/date';
 import Image from 'next/image';
+import { useState } from 'react';
+import { paymentService } from '@/src/services/payment.service';
+import { Loader2, CreditCard, ChevronRight } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface AppointmentCardProps {
     appointment: Appointment;
@@ -16,11 +20,31 @@ const statusColors: Record<AppointmentStatus, string> = {
 };
 
 export default function AppointmentCard({ appointment }: AppointmentCardProps) {
+    const [paymentLoading, setPaymentLoading] = useState(false);
     const doctor = appointment.doctor;
     const doctorName = doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'Unknown Doctor';
     const specialty = doctor?.doctorProfile?.specialty || 'General';
     const statusColor = statusColors[appointment.status] || 'bg-gray-100 text-gray-800';
     const isPast = new Date(appointment.appointmentStart) < new Date();
+    const isExpired = appointment.paymentExpiryTime && new Date(appointment.paymentExpiryTime) < new Date();
+
+    const handlePayment = async () => {
+        setPaymentLoading(true);
+        try {
+            const response = await paymentService.createCheckoutSession(appointment.id);
+            const { url } = response.data.data;
+            if (url) {
+                window.location.href = url;
+            } else {
+                throw new Error('Payment URL not found');
+            }
+        } catch (error) {
+            console.error('Payment redirect failed:', error);
+            toast.error('Failed to initiate payment. Please try again.');
+        } finally {
+            setPaymentLoading(false);
+        }
+    };
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:shadow-md transition-shadow">
@@ -83,8 +107,19 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
                 </span>
                 <div className="flex gap-2">
                     <button className="btn btn-sm btn-outline border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg">Details</button>
-                    {appointment.status === AppointmentStatus.APPROVED && !isPast && (
-                        <button className="btn btn-sm btn-primary rounded-lg shadow-sm">Pay Now</button>
+                    {appointment.status === AppointmentStatus.APPROVED && !isPast && !isExpired && (
+                        <button
+                            onClick={handlePayment}
+                            disabled={paymentLoading}
+                            className="btn btn-sm btn-primary rounded-lg shadow-md flex items-center gap-2 min-w-[120px]"
+                        >
+                            {paymentLoading ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                                <CreditCard className="w-3.5 h-3.5" />
+                            )}
+                            {paymentLoading ? 'Redirecting...' : 'Pay Now'}
+                        </button>
                     )}
                 </div>
             </div>

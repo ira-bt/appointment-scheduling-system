@@ -169,7 +169,8 @@ class EmailService {
               <p><strong>Date:</strong> ${date}</p>
               <p><strong>Time:</strong> ${time}</p>
             </div>
-            <p>Please log in to your dashboard to complete the payment (if applicable) and confirm your visit.</p>
+            <p style="color: #059669; font-weight: bold;">Important: Please complete the payment within the next 20 minutes to confirm your session. If not paid within this window, the appointment will be automatically cancelled.</p>
+            <p>Log in to your dashboard to "Pay Now" and secure your slot.</p>
             <p>Best regards,<br />The MediScheduler Team</p>
           </div>
           <div class="footer">
@@ -285,6 +286,165 @@ class EmailService {
       subject: 'New Appointment Request - MediScheduler',
       html,
       text: `Hello Dr. ${doctorName}, you have a new appointment request from ${patientName} for ${date} at ${time}.`,
+    });
+  }
+
+  /**
+   * Send payment confirmation email to patient
+   */
+  public async sendPaymentSuccessPatient(
+    patientEmail: string,
+    patientName: string,
+    doctorName: string,
+    amount: number,
+    date: string,
+    time: string
+  ): Promise<boolean> {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          .container { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px; }
+          .header { background-color: #059669; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { padding: 20px; line-height: 1.6; color: #374151; }
+          .details { background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0; }
+          .footer { text-align: center; font-size: 0.875rem; color: #6b7280; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Payment Successful</h1>
+          </div>
+          <div class="content">
+            <p>Hi <strong>${patientName}</strong>,</p>
+            <p>Thank you! Your payment for the consultation has been processed successfully.</p>
+            <div class="details">
+              <p><strong>Doctor:</strong> Dr. ${doctorName}</p>
+              <p><strong>Amount Paid:</strong> ₹${amount}</p>
+              <p><strong>Date:</strong> ${date}</p>
+              <p><strong>Time:</strong> ${time}</p>
+            </div>
+            <p>Your appointment is now <strong>Confirmed</strong>. You can find more details in your dashboard.</p>
+            <p>Best regards,<br />The MediScheduler Team</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2026 MediScheduler. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return await this.sendEmail({
+      to: patientEmail,
+      subject: 'Payment Successful & Appointment Confirmed - MediScheduler',
+      html,
+      text: `Hi ${patientName}, your payment of ₹${amount} for your appointment with Dr. ${doctorName} on ${date} was successful. Your appointment is now confirmed.`,
+    });
+  }
+
+  /**
+   * Send payment notification and scheduling confirmation to doctor
+   */
+  public async sendPaymentSuccessDoctor(
+    doctorEmail: string,
+    doctorName: string,
+    patientName: string,
+    amount: number,
+    date: string,
+    time: string
+  ): Promise<boolean> {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          .container { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px; }
+          .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { padding: 20px; line-height: 1.6; color: #374151; }
+          .details { background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0; }
+          .footer { text-align: center; font-size: 0.875rem; color: #6b7280; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Appointment Scheduled</h1>
+          </div>
+          <div class="content">
+            <p>Hi <strong>Dr. ${doctorName}</strong>,</p>
+            <p>A new appointment has been finalized in your schedule. The patient has successfully completed the payment.</p>
+            <div class="details">
+              <p><strong>Patient:</strong> ${patientName}</p>
+              <p><strong>Fee Credited:</strong> ₹${amount}</p>
+              <p><strong>Date:</strong> ${date}</p>
+              <p><strong>Time:</strong> ${time}</p>
+            </div>
+            <p>This appointment is now marked as <strong>Confirmed</strong> in your dashboard.</p>
+            <p>Best regards,<br />The MediScheduler Team</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2026 MediScheduler. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return await this.sendEmail({
+      to: doctorEmail,
+      subject: 'Appointment Scheduled: Payment Confirmed - MediScheduler',
+      html,
+      text: `Hi Dr. ${doctorName}, an appointment with ${patientName} on ${date} at ${time} has been scheduled and paid for (₹${amount}).`,
+    });
+  }
+
+  /**
+   * Send notification when the 20-minute payment initiation window expires
+   */
+  public async sendPaymentWindowExpired(
+    patientEmail: string,
+    patientName: string,
+    doctorName: string,
+    date: string
+  ): Promise<boolean> {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          .container { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px; }
+          .header { background-color: #6b7280; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { padding: 20px; line-height: 1.6; color: #374151; }
+          .footer { text-align: center; font-size: 0.875rem; color: #6b7280; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Payment Window Expired</h1>
+          </div>
+          <div class="content">
+            <p>Hi <strong>${patientName}</strong>,</p>
+            <p>Your appointment request with <strong>Dr. ${doctorName}</strong> for <strong>${date}</strong> has been cancelled.</p>
+            <p>The 20-minute window to initiate payment has expired. If you still wish to see the doctor, please book a new slot from the dashboard.</p>
+            <p>Best regards,<br />The MediScheduler Team</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2026 MediScheduler. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return await this.sendEmail({
+      to: patientEmail,
+      subject: 'Appointment Cancelled: Payment Window Expired - MediScheduler',
+      html,
+      text: `Hi ${patientName}, your appointment with Dr. ${doctorName} on ${date} has been cancelled because the 20-minute payment window expired.`,
     });
   }
 }
