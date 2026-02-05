@@ -91,7 +91,7 @@ export default function AnalyticsTab() {
 
     const stats = [
         {
-            label: 'Estimated Revenue',
+            label: 'Total Revenue',
             value: `₹${summary.totalRevenue.toLocaleString()}`,
             icon: DollarSign,
             color: 'bg-emerald-500',
@@ -107,7 +107,7 @@ export default function AnalyticsTab() {
             isPositive: true
         },
         {
-            label: 'Pending/Cancelled',
+            label: 'Rejected/Cancelled',
             value: summary.cancelledAppointments,
             icon: AlertCircle,
             color: 'bg-orange-500',
