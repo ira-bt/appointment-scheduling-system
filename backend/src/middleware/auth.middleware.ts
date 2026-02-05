@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/jwt.util';
-import { PrismaClient } from '@prisma/client';
 import { IApiResponse } from '../interfaces/response.interface';
 import prisma from '../config/prisma';
 import { Role } from '@prisma/client';
@@ -20,6 +19,8 @@ declare global {
     }
   }
 }
+
+export type AuthRequest = Request;
 
 /**
  * Authentication middleware
@@ -78,6 +79,9 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
     next(error);
   }
 };
+
+// Alias for convenience
+export const authMiddleware = protect;
 
 /**
  * Restrict access to specific roles

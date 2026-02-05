@@ -24,10 +24,13 @@ export const API = {
     LIST_DOCTOR: `${API_BASE}/appointments/doctor`,
     UPLOAD_REPORTS: (id: string) => `${API_BASE}/appointments/${id}/reports`,
     UPDATE_STATUS: (id: string) => `${API_BASE}/appointments/${id}/status`,
-
   },
   PAYMENTS: {
     BASE: `${API_BASE}/payments`,
     CREATE_SESSION: `${API_BASE}/payments/create-checkout-session`,
+  },
+  ANALYTICS: {
+    BASE: `${API_BASE}/analytics`,
+    DOCTOR: '/doctor',
   },
 } as const;
