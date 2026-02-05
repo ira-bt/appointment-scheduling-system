@@ -20,7 +20,7 @@ export default function DoctorDashboard() {
     const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<DashboardTab>(DashboardTab.REQUESTS);
+    const [activeTab, setActiveTab] = useState<DashboardTab>(DashboardTab.ANALYTICS);
     const [actionLoading, setActionLoading] = useState(false);
 
     useEffect(() => {
@@ -92,170 +92,193 @@ export default function DoctorDashboard() {
     return (
         <ProtectedRoute allowedRoles={[UserRole.DOCTOR]}>
             <div className="min-h-screen bg-gray-50">
-                {/* Navbar */}
-                <div className="navbar bg-white shadow-sm px-4 lg:px-8 border-b border-gray-100">
-                    <div className="flex-1">
-                        <span className="text-2xl font-bold text-blue-600">MediScheduler <span className="text-gray-400 font-normal">| Doctor Port</span></span>
-                    </div>
-                    <div className="flex-none gap-2">
-                        <div className="dropdown dropdown-end">
-                            <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
-                                <div className="w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
-                                    {user?.firstName?.charAt(0)}
-                                </div>
-                            </label>
-                            <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
-                                <li><a className="justify-between">My Profile</a></li>
-                                <li><button onClick={() => setIsAvailabilityModalOpen(true)}>Availability Settings</button></li>
-                                <li><button onClick={logout}>Logout</button></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-4 lg:p-8 max-w-7xl mx-auto">
-                    <header className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-800">Welcome back, Dr. {user?.lastName}</h1>
-                            <p className="text-gray-600">Here&apos;s an overview of your practice today.</p>
-                        </div>
-                        <button
-                            onClick={() => setIsAvailabilityModalOpen(true)}
-                            className="btn bg-blue-600 hover:bg-blue-700 text-white rounded-lg border-none shadow-lg shadow-blue-100 px-6"
-                        >
-                            Update Availability
-                        </button>
-                    </header>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <div className="stats shadow-sm bg-white border border-gray-100">
-                            <div className="stat">
-                                <div className="stat-title text-gray-500 flex items-center gap-2">
-                                    <Clock className="w-4 h-4 text-blue-500" />
-                                    Today&apos;s Sessions
-                                </div>
-                                <div className="stat-value text-blue-600 text-3xl">{stats.todayCount}</div>
-                                <div className="stat-desc text-gray-400">Scheduled for today</div>
-                            </div>
+                {/* Sidebar Drawer */}
+                <div className="flex h-screen overflow-hidden">
+                    {/* Sidebar */}
+                    <aside className="w-64 bg-white border-r border-gray-100 flex flex-col shrink-0">
+                        <div className="p-6 border-b border-gray-50">
+                            <span className="text-xl font-black text-blue-600 tracking-tight">MediScheduler</span>
                         </div>
 
-                        <div className="stats shadow-sm bg-white border border-gray-100">
-                            <div className="stat">
-                                <div className="stat-title text-gray-500 flex items-center gap-2">
-                                    <CalendarDays className="w-4 h-4 text-orange-500" />
-                                    Pending Requests
-                                </div>
-                                <div className="stat-value text-orange-500 text-3xl">{stats.pending}</div>
-                                <div className="stat-desc text-gray-400">Needs your review</div>
-                            </div>
-                        </div>
-
-                        <div className="stats shadow-sm bg-white border border-gray-100">
-                            <div className="stat">
-                                <div className="stat-title text-gray-500 flex items-center gap-2">
-                                    <Users className="w-4 h-4 text-purple-500" />
-                                    Total Patients
-                                </div>
-                                <div className="stat-value text-gray-800 text-3xl">{stats.totalPatients}</div>
-                                <div className="stat-desc text-gray-400">Engaged over lifetime</div>
-                            </div>
-                        </div>
-
-                        <div className="stats shadow-sm bg-white border border-gray-100">
-                            <div className="stat">
-                                <div className="stat-title text-gray-500 flex items-center gap-2">
-                                    <IndianRupee className="w-4 h-4 text-green-500" />
-                                    Monthly Earnings
-                                </div>
-                                <div className="stat-value text-green-600 text-3xl">₹{stats.earnings}</div>
-                                <div className="stat-desc text-gray-400">Consultations completed</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col gap-6">
-                        {/* Tabs */}
-                        <div className="tabs tabs-boxed bg-white w-fit border border-gray-100 p-1">
-                            <button
-                                onClick={() => setActiveTab(DashboardTab.REQUESTS)}
-                                className={`tab transition-all ${activeTab === DashboardTab.REQUESTS ? 'bg-blue-600 text-white rounded-lg' : 'text-gray-500'}`}
-                            >
-                                Requests
-                                {stats.pending > 0 && <span className="ml-2 badge badge-sm bg-orange-500 text-white border-none">{stats.pending}</span>}
-                            </button>
-                            <button
-                                onClick={() => setActiveTab(DashboardTab.APPROVED)}
-                                className={`tab transition-all ${activeTab === DashboardTab.APPROVED ? 'bg-blue-600 text-white rounded-lg' : 'text-gray-500'}`}
-                            >
-                                Approved
-                            </button>
-                            <button
-                                onClick={() => setActiveTab(DashboardTab.SCHEDULED)}
-                                className={`tab transition-all ${activeTab === DashboardTab.SCHEDULED ? 'bg-blue-600 text-white rounded-lg' : 'text-gray-500'}`}
-                            >
-                                Scheduled
-                            </button>
-                            <button
-                                onClick={() => setActiveTab(DashboardTab.HISTORY)}
-                                className={`tab transition-all ${activeTab === DashboardTab.HISTORY ? 'bg-blue-600 text-white rounded-lg' : 'text-gray-500'}`}
-                            >
-                                History
-                            </button>
+                        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                             <button
                                 onClick={() => setActiveTab(DashboardTab.ANALYTICS)}
-                                className={`tab transition-all ${activeTab === DashboardTab.ANALYTICS ? 'bg-blue-600 text-white rounded-lg' : 'text-gray-500'}`}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === DashboardTab.ANALYTICS ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-gray-50'}`}
                             >
+                                <BarChart3 className="w-5 h-5" />
                                 Analytics
                             </button>
-                        </div>
 
-                        {/* List */}
-                        <div className="min-h-[400px]">
-                            {activeTab === DashboardTab.ANALYTICS ? (
-                                <AnalyticsTab />
-                            ) : loading ? (
-                                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                                    <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
-                                    <p className="text-gray-500 font-medium">Loading your appointments...</p>
+                            <div className="pt-4 pb-2">
+                                <p className="px-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Appointments</p>
+                            </div>
+
+                            <button
+                                onClick={() => setActiveTab(DashboardTab.REQUESTS)}
+                                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold transition-all ${activeTab === DashboardTab.REQUESTS ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-gray-50'}`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <Clock className="w-5 h-5" />
+                                    Requests
                                 </div>
-                            ) : filteredAppointments.length > 0 ? (
-                                <div className="space-y-4">
-                                    {filteredAppointments.map((appointment) => (
-                                        <DoctorAppointmentCard
-                                            key={appointment.id}
-                                            appointment={appointment}
-                                            onStatusUpdate={handleStatusUpdate}
-                                            loading={actionLoading}
-                                        />
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm text-center px-4">
-                                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                                        <Users className="w-10 h-10 text-gray-300" />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-gray-800 mb-2">
-                                        No {
-                                            activeTab === DashboardTab.REQUESTS ? 'pending requests' :
-                                                activeTab === DashboardTab.APPROVED ? 'approved appointments' :
-                                                    activeTab === DashboardTab.SCHEDULED ? 'scheduled sessions' :
-                                                        'appointment history'
-                                        }
-                                    </h3>
-                                    <p className="text-gray-500 max-w-sm">
-                                        {activeTab === DashboardTab.REQUESTS
-                                            ? "You're all caught up! New patient booking requests will appear here."
-                                            : activeTab === DashboardTab.APPROVED
-                                                ? "Appointments approved by you but awaiting patient payment."
-                                                : activeTab === DashboardTab.SCHEDULED
-                                                    ? "You don't have any upcoming confirmed appointments."
-                                                    : "Your history is clean. Completed or cancelled appointments will appear here."}
-                                    </p>
-                                </div>
-                            )}
+                                {stats.pending > 0 && (
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] ${activeTab === DashboardTab.REQUESTS ? 'bg-white text-blue-600' : 'bg-orange-500 text-white'}`}>
+                                        {stats.pending}
+                                    </span>
+                                )}
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab(DashboardTab.APPROVED)}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === DashboardTab.APPROVED ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-gray-50'}`}
+                            >
+                                <CalendarDays className="w-5 h-5" />
+                                Approved
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab(DashboardTab.SCHEDULED)}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === DashboardTab.SCHEDULED ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-gray-50'}`}
+                            >
+                                <CalendarDays className="w-5 h-5" />
+                                Scheduled
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab(DashboardTab.HISTORY)}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === DashboardTab.HISTORY ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-gray-50'}`}
+                            >
+                                <CalendarDays className="w-5 h-5" />
+                                History
+                            </button>
+                        </nav>
+
+                        <div className="p-4 border-t border-gray-50 space-y-2">
+                            <button
+                                onClick={() => setIsAvailabilityModalOpen(true)}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition-all"
+                            >
+                                <Clock className="w-5 h-5 text-blue-500" />
+                                Availability
+                            </button>
+                            <button
+                                onClick={logout}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-red-500 hover:bg-red-50 transition-all"
+                            >
+                                <Clock className="w-5 h-5" />
+                                Logout
+                            </button>
                         </div>
-                    </div>
+                    </aside>
+
+                    {/* Main Content Area */}
+                    <main className="flex-1 overflow-y-auto bg-gray-50">
+                        {/* Top Header */}
+                        <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
+                            <div>
+                                <h2 className="text-xl font-black text-gray-900 capitalize">
+                                    {activeTab === DashboardTab.ANALYTICS ? 'Practice Analytics' : `${activeTab} Management`}
+                                </h2>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="text-right hidden sm:block">
+                                    <p className="text-sm font-black text-gray-900">Dr. {user?.firstName} {user?.lastName}</p>
+                                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Medical Professional</p>
+                                </div>
+                                <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black shadow-lg shadow-blue-100">
+                                    {user?.firstName?.charAt(0)}
+                                </div>
+                            </div>
+                        </header>
+
+                        <div className="p-6 max-w-6xl mx-auto">
+                            {/* Stats Summary - Simple and Industry Grade */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 group hover:shadow-md transition-all">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                            <Clock className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Today</p>
+                                            <p className="text-xl font-black text-gray-900">{stats.todayCount} Sessions</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 group hover:shadow-md transition-all">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600">
+                                            <CalendarDays className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pending</p>
+                                            <p className="text-xl font-black text-gray-900">{stats.pending} Requests</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 group hover:shadow-md transition-all">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                            <IndianRupee className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Earnings</p>
+                                            <p className="text-xl font-black text-gray-900">₹{stats.earnings.toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            {/* List */}
+                            <div className="min-h-[400px]">
+                                {activeTab === DashboardTab.ANALYTICS ? (
+                                    <AnalyticsTab />
+                                ) : loading ? (
+                                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                                        <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
+                                        <p className="text-gray-500 font-medium">Loading your appointments...</p>
+                                    </div>
+                                ) : filteredAppointments.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {filteredAppointments.map((appointment) => (
+                                            <DoctorAppointmentCard
+                                                key={appointment.id}
+                                                appointment={appointment}
+                                                onStatusUpdate={handleStatusUpdate}
+                                                loading={actionLoading}
+                                            />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm text-center px-4">
+                                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                                            <Users className="w-10 h-10 text-gray-300" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-800 mb-2">
+                                            No {
+                                                activeTab === DashboardTab.REQUESTS ? 'pending requests' :
+                                                    activeTab === DashboardTab.APPROVED ? 'approved appointments' :
+                                                        activeTab === DashboardTab.SCHEDULED ? 'scheduled sessions' :
+                                                            'appointment history'
+                                            }
+                                        </h3>
+                                        <p className="text-gray-500 max-w-sm">
+                                            {activeTab === DashboardTab.REQUESTS
+                                                ? "You're all caught up! New patient booking requests will appear here."
+                                                : activeTab === DashboardTab.APPROVED
+                                                    ? "Appointments approved by you but awaiting patient payment."
+                                                    : activeTab === DashboardTab.SCHEDULED
+                                                        ? "You don't have any upcoming confirmed appointments."
+                                                        : "Your history is clean. Completed or cancelled appointments will appear here."}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </main>
                 </div>
 
                 {/* Availability Modal */}
