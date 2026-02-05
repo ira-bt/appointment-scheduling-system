@@ -299,7 +299,7 @@ export class AppointmentController {
             } else if (type === 'past') {
                 where.OR = [
                     { appointmentStart: { lt: now } },
-                    { status: { in: [AppointmentStatus.COMPLETED, AppointmentStatus.REJECTED] } }
+                    { status: { in: [AppointmentStatus.COMPLETED, AppointmentStatus.REJECTED, AppointmentStatus.CANCELLED] } }
                 ];
             }
 

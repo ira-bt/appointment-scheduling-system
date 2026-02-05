@@ -1,9 +1,9 @@
 import { Appointment, AppointmentStatus } from '@/src/types/appointment.types';
 import { formatDate, formatTime } from '@/src/utils/date';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { paymentService } from '@/src/services/payment.service';
-import { Loader2, CreditCard, ChevronRight } from 'lucide-react';
+import { Loader2, CreditCard, ChevronRight, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface AppointmentCardProps {
@@ -26,7 +26,45 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
     const specialty = doctor?.doctorProfile?.specialty || 'General';
     const statusColor = statusColors[appointment.status] || 'bg-gray-100 text-gray-800';
     const isPast = new Date(appointment.appointmentStart) < new Date();
-    const isExpired = appointment.paymentExpiryTime && new Date(appointment.paymentExpiryTime) < new Date();
+    const [timeLeft, setTimeLeft] = useState<string | null>(null);
+
+    const isExpired = useMemo(() => {
+        if (!appointment.paymentExpiryTime) return false;
+        return new Date(appointment.paymentExpiryTime) < new Date();
+    }, [appointment.paymentExpiryTime]);
+
+    useEffect(() => {
+        if (appointment.status !== AppointmentStatus.APPROVED || !appointment.paymentExpiryTime || isExpired) {
+            setTimeLeft(null);
+            return;
+        }
+
+        const calculateTimeLeft = () => {
+            const expiryDate = new Date(appointment.paymentExpiryTime!);
+            const now = new Date();
+            const difference = expiryDate.getTime() - now.getTime();
+
+            if (difference <= 0) {
+                setTimeLeft('00:00');
+                return false;
+            }
+
+            const minutes = Math.floor((difference / 1000 / 60) % 60);
+            const seconds = Math.floor((difference / 1000) % 60);
+            setTimeLeft(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+            return true;
+        };
+
+        calculateTimeLeft();
+        const timer = setInterval(() => {
+            const hasTime = calculateTimeLeft();
+            if (!hasTime) {
+                clearInterval(timer);
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [appointment.paymentExpiryTime, appointment.status, isExpired]);
 
     const handlePayment = async () => {
         setPaymentLoading(true);
@@ -67,7 +105,7 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
                     <p className="text-blue-600 text-sm font-medium">{specialty}</p>
                     <div className="flex items-center gap-2 mt-2 text-gray-500 text-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" />
                         </svg>
                         <span>{formatDate(appointment.appointmentStart)}</span>
                         <span className="mx-1">•</span>
@@ -105,22 +143,30 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
                 <span className={`px-3 py-1 rounded-full text-xs font-bold border ${statusColor}`}>
                     {appointment.status}
                 </span>
-                <div className="flex gap-2">
-                    <button className="btn btn-sm btn-outline border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg">Details</button>
-                    {appointment.status === AppointmentStatus.APPROVED && !isPast && !isExpired && (
-                        <button
-                            onClick={handlePayment}
-                            disabled={paymentLoading}
-                            className="btn btn-sm btn-primary rounded-lg shadow-md flex items-center gap-2 min-w-[120px]"
-                        >
-                            {paymentLoading ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            ) : (
-                                <CreditCard className="w-3.5 h-3.5" />
-                            )}
-                            {paymentLoading ? 'Redirecting...' : 'Pay Now'}
-                        </button>
+                <div className="flex flex-col items-end gap-2">
+                    {timeLeft && (
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md border border-orange-100 animate-pulse">
+                            <Clock className="w-3 h-3" />
+                            <span>Expires in: {timeLeft}</span>
+                        </div>
                     )}
+                    <div className="flex gap-2">
+                        <button className="btn btn-sm btn-outline border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg">Details</button>
+                        {appointment.status === AppointmentStatus.APPROVED && !isPast && !isExpired && (
+                            <button
+                                onClick={handlePayment}
+                                disabled={paymentLoading}
+                                className="btn btn-sm btn-primary rounded-lg shadow-md flex items-center gap-2 min-w-[120px]"
+                            >
+                                {paymentLoading ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                    <CreditCard className="w-3.5 h-3.5" />
+                                )}
+                                {paymentLoading ? 'Redirecting...' : 'Pay Now'}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

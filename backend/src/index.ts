@@ -102,7 +102,7 @@ app.listen(PORT, () => {
           await prisma.appointment.update({
             where: { id: app.id },
             data: {
-              status: AppointmentStatus.CANCELLED, 
+              status: AppointmentStatus.CANCELLED,
               paymentStatus: PaymentStatus.FAILED
             },
           });

@@ -77,8 +77,14 @@ export default function DoctorDashboard() {
             return appointments.filter(a => a.status === AppointmentStatus.PENDING);
         } else if (activeTab === DashboardTab.APPROVED) {
             return appointments.filter(a => a.status === AppointmentStatus.APPROVED);
+        } else if (activeTab === DashboardTab.SCHEDULED) {
+            return appointments.filter(a => a.status === AppointmentStatus.CONFIRMED);
         } else {
-            return appointments.filter(a => a.status === AppointmentStatus.CONFIRMED || a.status === AppointmentStatus.COMPLETED);
+            return appointments.filter(a =>
+                a.status === AppointmentStatus.COMPLETED ||
+                a.status === AppointmentStatus.REJECTED ||
+                a.status === AppointmentStatus.CANCELLED
+            );
         }
     }, [appointments, activeTab]);
 
@@ -189,6 +195,12 @@ export default function DoctorDashboard() {
                             >
                                 Scheduled
                             </button>
+                            <button
+                                onClick={() => setActiveTab(DashboardTab.HISTORY)}
+                                className={`tab transition-all ${activeTab === DashboardTab.HISTORY ? 'bg-blue-600 text-white rounded-lg' : 'text-gray-500'}`}
+                            >
+                                History
+                            </button>
                         </div>
 
                         {/* List */}
@@ -215,14 +227,21 @@ export default function DoctorDashboard() {
                                         <Users className="w-10 h-10 text-gray-300" />
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-800 mb-2">
-                                        No {activeTab === DashboardTab.REQUESTS ? 'pending requests' : activeTab === DashboardTab.APPROVED ? 'approved appointments' : 'scheduled appointments'}
+                                        No {
+                                            activeTab === DashboardTab.REQUESTS ? 'pending requests' :
+                                                activeTab === DashboardTab.APPROVED ? 'approved appointments' :
+                                                    activeTab === DashboardTab.SCHEDULED ? 'scheduled sessions' :
+                                                        'appointment history'
+                                        }
                                     </h3>
                                     <p className="text-gray-500 max-w-sm">
                                         {activeTab === DashboardTab.REQUESTS
                                             ? "You're all caught up! New patient booking requests will appear here."
                                             : activeTab === DashboardTab.APPROVED
                                                 ? "Appointments approved by you but awaiting patient payment."
-                                                : "You don't have any confirmed or completed appointments yet."}
+                                                : activeTab === DashboardTab.SCHEDULED
+                                                    ? "You don't have any upcoming confirmed appointments."
+                                                    : "Your history is clean. Completed or cancelled appointments will appear here."}
                                     </p>
                                 </div>
                             )}
