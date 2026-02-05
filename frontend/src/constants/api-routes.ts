@@ -26,4 +26,8 @@ export const API = {
     UPDATE_STATUS: (id: string) => `${API_BASE}/appointments/${id}/status`,
 
   },
+  PAYMENTS: {
+    BASE: `${API_BASE}/payments`,
+    CREATE_SESSION: `${API_BASE}/payments/create-checkout-session`,
+  },
 } as const;

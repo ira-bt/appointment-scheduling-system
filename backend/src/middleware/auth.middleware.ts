@@ -5,10 +5,18 @@ import { IApiResponse } from '../interfaces/response.interface';
 import prisma from '../config/prisma';
 import { Role } from '@prisma/client';
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: Role;
+}
+
 declare global {
   namespace Express {
     interface Request {
-      user?: any;
+      user: AuthUser;
     }
   }
 }
@@ -64,9 +72,9 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
     }
 
     // Grant Access
-    req.user = user;
+    req.user = user as AuthUser;
     next();
-  } catch (error) {
+  } catch (error: unknown) {
     next(error);
   }
 };

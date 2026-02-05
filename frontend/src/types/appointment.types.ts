@@ -32,6 +32,7 @@ export interface Appointment {
     notes?: string;
     consultationFee: number;
     paymentStatus: string;
+    paymentExpiryTime?: string | Date;
     createdAt: string | Date;
     updatedAt: string | Date;
     doctor?: User & {

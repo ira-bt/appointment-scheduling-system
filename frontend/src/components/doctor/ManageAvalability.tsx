@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { doctorService, AvailabilityItem } from '@/src/services/doctor.service';
 import { getErrorMessage } from '@/src/utils/api-error';
 
@@ -186,9 +187,16 @@ export default function ManageAvailability({ onClose }: { onClose: () => void })
                         <button
                             onClick={handleSave}
                             disabled={loading}
-                            className={`btn btn-primary btn-sm min-w-[120px] rounded-lg shadow-md shadow-blue-100 flex-1 md:flex-none ${loading ? 'loading' : ''}`}
+                            className="btn btn-primary btn-sm min-w-[120px] rounded-lg shadow-md shadow-blue-100 flex-1 md:flex-none flex items-center justify-center gap-2"
                         >
-                            {loading ? 'Saving...' : 'Save Changes'}
+                            {loading ? (
+                                <>
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    <span>Saving...</span>
+                                </>
+                            ) : (
+                                'Save Changes'
+                            )}
                         </button>
                     </div>
                 </div>

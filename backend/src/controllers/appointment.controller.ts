@@ -299,7 +299,7 @@ export class AppointmentController {
             } else if (type === 'past') {
                 where.OR = [
                     { appointmentStart: { lt: now } },
-                    { status: { in: [AppointmentStatus.COMPLETED, AppointmentStatus.REJECTED] } }
+                    { status: { in: [AppointmentStatus.COMPLETED, AppointmentStatus.REJECTED, AppointmentStatus.CANCELLED] } }
                 ];
             }
 
@@ -569,10 +569,17 @@ export class AppointmentController {
                 return;
             }
 
-            // 2. Update status
+            // 2. Update status and set initiation window (20 minutes)
+            const expiryTime = status === AppointmentStatus.APPROVED
+                ? new Date(Date.now() + 20 * 60 * 1000)
+                : null;
+
             const updatedAppointment = await prisma.appointment.update({
                 where: { id: appointmentId },
-                data: { status },
+                data: {
+                    status,
+                    paymentExpiryTime: expiryTime
+                },
             });
 
             // 3. Trigger Email Notification (Asynchronous)
@@ -581,13 +588,15 @@ export class AppointmentController {
             const dateStr = new Date(appointment.appointmentStart).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
             if (status === AppointmentStatus.APPROVED) {
+                // Update approval email text to match the new 20-min initiation window
                 emailService.sendAppointmentApproval(
                     appointment.patient.user.email,
                     appointment.patient.user.firstName,
                     dateStr,
                     timeStr
                 ).catch((err: unknown) => console.error('Approval email failed:', err));
-            } else if (status === AppointmentStatus.REJECTED) {
+            }
+            else if (status === AppointmentStatus.REJECTED) {
                 emailService.sendAppointmentRejection(
                     appointment.patient.user.email,
                     appointment.patient.user.firstName,
