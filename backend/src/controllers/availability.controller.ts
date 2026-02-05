@@ -134,8 +134,8 @@ export class AvailabilityController {
                 }
             });
 
-            // 3. Generate 30-min slots
-            const slots: string[] = [];
+            // 3. Generate all possible 30-min slots for the schedule
+            const slots: any[] = [];
             const [startHour, startMin] = availability.startTime.split(':').map(Number);
             const [endHour, endMin] = availability.endTime.split(':').map(Number);
 
@@ -146,36 +146,56 @@ export class AvailabilityController {
             end.setHours(endHour, endMin, 0, 0);
 
             const now = new Date();
+            const minLeadTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
             while (current < end) {
                 const slotEnd = new Date(current);
                 slotEnd.setMinutes(current.getMinutes() + 30);
-
                 if (slotEnd > end) break;
 
-                // Check if slot is in the past (only if target date is today)
-                if (current > now) {
-                    // Check for overlap with existing appointments
+                const timeStr = current.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+                // Determine availability status
+                let isAvailable = true;
+                let reason: 'past' | 'booked' | 'lead_time' | null = null;
+
+                // 1. Check if in the past
+                if (current < now) {
+                    isAvailable = false;
+                    reason = 'past';
+                }
+                // 2. Check 24h lead time
+                else if (current < minLeadTime) {
+                    isAvailable = false;
+                    reason = 'lead_time';
+                }
+                // 3. Check if occupied
+                else {
                     const isOccupied = existingAppointments.some(app => {
                         const appStart = new Date(app.appointmentStart);
                         const appEnd = new Date(appStart);
                         appEnd.setMinutes(appStart.getMinutes() + app.durationMinutes);
-
-                        // Overlap condition: (StartA < EndB) && (EndA > StartB)
                         return (current < appEnd) && (slotEnd > appStart);
                     });
 
-                    if (!isOccupied) {
-                        slots.push(current.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }));
+                    if (isOccupied) {
+                        isAvailable = false;
+                        reason = 'booked';
                     }
                 }
+
+                slots.push({
+                    time: timeStr,
+                    isAvailable,
+                    reason
+                });
 
                 current.setMinutes(current.getMinutes() + 30);
             }
 
             res.status(200).json({
                 success: true,
-                message: 'Available slots fetched successfully',
+                message: 'Slots fetched successfully',
                 data: { slots },
                 statusCode: 200,
             } as IApiResponse);
