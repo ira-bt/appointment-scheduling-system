@@ -103,10 +103,12 @@ export class AppointmentController {
             requestedEnd.setMinutes(requestedStart.getMinutes() + 30); // Default 30 min slots
 
             const now = new Date();
-            if (requestedStart <= now) {
+            const minLeadTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+            if (requestedStart < minLeadTime) {
                 res.status(400).json({
                     success: false,
-                    message: 'Cannot book appointments in the past',
+                    message: 'Appointments must be booked at least 24 hours in advance',
                     statusCode: 400,
                 } as IApiResponse);
                 return;

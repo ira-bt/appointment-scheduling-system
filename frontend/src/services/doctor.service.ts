@@ -46,10 +46,16 @@ export interface AvailabilityUpdateResponse {
     message: string;
 }
 
+export interface Slot {
+    time: string;
+    isAvailable: boolean;
+    reason?: 'past' | 'booked' | 'lead_time' | null;
+}
+
 export interface SlotsResponse {
     success: boolean;
     data: {
-        slots: string[];
+        slots: Slot[];
     };
     message: string;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { doctorService } from '@/src/services/doctor.service';
+import { doctorService, Slot } from '@/src/services/doctor.service';
 import { getErrorMessage } from '@/src/utils/api-error';
 import { formatDateToISO } from '@/src/utils/date';
 
@@ -13,7 +13,7 @@ interface SlotPickerProps {
 }
 
 export default function SlotPicker({ doctorId, selectedDate, onSlotSelect, selectedSlot }: SlotPickerProps) {
-    const [slots, setSlots] = useState<string[]>([]);
+    const [slots, setSlots] = useState<Slot[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -68,19 +68,32 @@ export default function SlotPicker({ doctorId, selectedDate, onSlotSelect, selec
                 </div>
             ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {slots.map((slot) => (
-                        <button
-                            key={slot}
-                            onClick={() => onSlotSelect(slot)}
-                            className={`py-3 px-4 rounded-xl border text-sm font-semibold transition-all duration-200
-                                ${selectedSlot === slot
-                                    ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100'
-                                    : 'bg-white border-gray-100 text-gray-700 hover:border-blue-200 hover:bg-blue-50/50 hover:text-blue-600'
-                                }`}
-                        >
-                            {slot}
-                        </button>
-                    ))}
+                    {slots.map((slot) => {
+                        const isSelected = selectedSlot === slot.time;
+                        const isDisabled = !slot.isAvailable;
+
+                        return (
+                            <button
+                                key={slot.time}
+                                onClick={() => !isDisabled && onSlotSelect(slot.time)}
+                                disabled={isDisabled}
+                                className={`py-3 px-4 rounded-xl border text-sm font-semibold transition-all duration-200 relative group
+                                    ${isSelected
+                                        ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100'
+                                        : isDisabled
+                                            ? 'bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed'
+                                            : 'bg-white border-gray-100 text-gray-700 hover:border-blue-200 hover:bg-blue-50/50 hover:text-blue-600'
+                                    }`}
+                            >
+                                {slot.time}
+                                {isDisabled && slot.reason && (
+                                    <span className="absolute -top-2 -right-1 bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none uppercase">
+                                        {slot.reason === 'lead_time' ? '24h rule' : slot.reason}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
         </div>

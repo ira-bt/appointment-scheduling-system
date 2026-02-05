@@ -119,6 +119,38 @@ app.listen(PORT, () => {
 
         console.log(`[Cleanup] Successfully cancelled ${expiredAppointments.length} appointments.`);
       }
+
+      // Background Cleanup: Reject PENDING appointments that weren't approved within 24 hours
+      console.log('[Cleanup] Checking for stale PENDING requests...');
+      const stalePending = await prisma.appointment.findMany({
+        where: {
+          status: AppointmentStatus.PENDING,
+          createdAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+        },
+        include: {
+          patient: { include: { user: true } },
+          doctor: { include: { user: true } },
+        }
+      });
+
+      if (stalePending.length > 0) {
+        console.log(`[Cleanup] Found ${stalePending.length} stale PENDING requests. Rejecting...`);
+        for (const app of stalePending) {
+          await prisma.appointment.update({
+            where: { id: app.id },
+            data: { status: AppointmentStatus.REJECTED },
+          });
+
+          // Send auto-rejection email
+          const dateStr = new Date(app.appointmentStart).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+          await emailService.sendAppointmentRejection(
+            app.patient.user.email,
+            app.patient.user.firstName,
+            dateStr
+          ).catch((err: unknown) => console.error(`[Cleanup] Rejection email failed for ${app.id}:`, err));
+        }
+        console.log(`[Cleanup] Successfully rejected ${stalePending.length} stale requests.`);
+      }
     } catch (error) {
       console.error('[Cleanup] Error in background task:', error);
     }

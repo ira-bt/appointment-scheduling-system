@@ -47,17 +47,18 @@ export default function BookingCalendar({ onDateSelect, selectedDate }: BookingC
             const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i);
             const isToday = date.getTime() === today.getTime();
             const isSelected = selectedDate?.getTime() === date.getTime();
-            const isPast = date < today;
+            // Disable if it's in the past OR if it's today (due to 24h lead time rule)
+            const isDisabled = date <= today;
 
             days.push(
                 <button
                     key={i}
-                    onClick={() => !isPast && onDateSelect(date)}
-                    disabled={isPast}
-                    className={`h-10 w-10 flex items-center justify-center rounded-full text-sm font-medium transition-all
+                    onClick={() => !isDisabled && onDateSelect(date)}
+                    disabled={isDisabled}
+                    className={`h-10 w-10 flex items-center justify-center rounded-full text-sm font-medium transition-all relative
                         ${isSelected ? 'bg-blue-600 text-white shadow-md shadow-blue-200' :
-                            isToday ? 'border-2 border-blue-600 text-blue-600' :
-                                isPast ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}
+                            isToday ? 'border-2 border-gray-300 text-gray-400' :
+                                isDisabled ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}
                 >
                     {i}
                 </button>
@@ -103,14 +104,14 @@ export default function BookingCalendar({ onDateSelect, selectedDate }: BookingC
                 {renderDays()}
             </div>
 
-            <div className="mt-6 flex items-center gap-4 text-xs">
+            <div className="mt-6 flex flex-wrap items-center gap-4 text-xs">
                 <div className="flex items-center gap-1.5">
                     <div className="w-3 h-3 rounded-full bg-blue-600"></div>
                     <span className="text-gray-500 font-medium">Selected</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full border-2 border-blue-600"></div>
-                    <span className="text-gray-500 font-medium">Today</span>
+                    <div className="w-3 h-3 rounded-full border-2 border-gray-300"></div>
+                    <span className="text-gray-500 font-medium">Today (Restricted)</span>
                 </div>
             </div>
         </div>
