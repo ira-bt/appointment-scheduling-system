@@ -15,6 +15,7 @@ import userRoutes from './routes/user.routes';
 import doctorRoutes from './routes/doctor.routes';
 import appointmentRoutes from './routes/appointment.routes';
 import paymentRoutes from './routes/payment.routes';
+import analyticsRoutes from './routes/analytics.routes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -49,6 +50,7 @@ app.use(`${API}${ROUTES.AUTH.BASE}`, authRoutes);
 app.use(`${API}${ROUTES.USERS.BASE}`, userRoutes);
 app.use(`${API}${ROUTES.DOCTORS.BASE}`, doctorRoutes);
 app.use(`${API}${ROUTES.APPOINTMENTS.BASE}`, appointmentRoutes);
+app.use(`${API}${ROUTES.ANALYTICS.BASE}`, analyticsRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

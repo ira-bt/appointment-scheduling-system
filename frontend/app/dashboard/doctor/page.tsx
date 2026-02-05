@@ -12,7 +12,8 @@ import DoctorAppointmentCard from '@/src/components/doctor/DoctorAppointmentCard
 import { toast } from 'react-hot-toast';
 import { getErrorMessage } from '@/src/utils/api-error';
 import { formatBloodType } from '@/src/utils/healthcare';
-import { Loader2, Users, CalendarDays, Clock, IndianRupee, CreditCard } from 'lucide-react';
+import { Loader2, Users, CalendarDays, Clock, IndianRupee, CreditCard, BarChart3 } from 'lucide-react';
+import AnalyticsTab from '@/src/components/analytics/AnalyticsTab';
 
 export default function DoctorDashboard() {
     const { user, logout } = useAuth();
@@ -201,11 +202,19 @@ export default function DoctorDashboard() {
                             >
                                 History
                             </button>
+                            <button
+                                onClick={() => setActiveTab(DashboardTab.ANALYTICS)}
+                                className={`tab transition-all ${activeTab === DashboardTab.ANALYTICS ? 'bg-blue-600 text-white rounded-lg' : 'text-gray-500'}`}
+                            >
+                                Analytics
+                            </button>
                         </div>
 
                         {/* List */}
                         <div className="min-h-[400px]">
-                            {loading ? (
+                            {activeTab === DashboardTab.ANALYTICS ? (
+                                <AnalyticsTab />
+                            ) : loading ? (
                                 <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
                                     <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
                                     <p className="text-gray-500 font-medium">Loading your appointments...</p>

@@ -34,6 +34,10 @@ export const ROUTES = {
     CREATE_SESSION: '/create-checkout-session',
     WEBHOOK: '/webhook',
   },
+  ANALYTICS: {
+    BASE: '/analytics',
+    DOCTOR: '/doctor',
+  },
 };
 
 export const FRONTEND_ROUTES = {
