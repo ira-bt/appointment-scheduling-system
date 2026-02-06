@@ -36,6 +36,8 @@ export interface DoctorProfile {
   experience?: number;
   qualification?: string;
   consultationFee: number;
+  averageRating?: number;
+  reviewCount?: number;
   createdAt: string | Date;
   updatedAt: string | Date;
 }

@@ -38,6 +38,11 @@ export const ROUTES = {
     BASE: '/analytics',
     DOCTOR: '/doctor',
   },
+  RATINGS: {
+    BASE: '/ratings',
+    CREATE: '/',
+    DOCTOR: '/doctor/:doctorId',
+  },
 };
 
 export const FRONTEND_ROUTES = {

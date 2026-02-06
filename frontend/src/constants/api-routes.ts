@@ -33,4 +33,8 @@ export const API = {
     BASE: `${API_BASE}/analytics`,
     DOCTOR: '/doctor',
   },
+  RATINGS: {
+    BASE: `${API_BASE}/ratings`,
+    DOCTOR: (doctorId: string) => `${API_BASE}/ratings/doctor/${doctorId}`,
+  },
 } as const;

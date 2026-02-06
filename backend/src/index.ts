@@ -16,6 +16,7 @@ import doctorRoutes from './routes/doctor.routes';
 import appointmentRoutes from './routes/appointment.routes';
 import paymentRoutes from './routes/payment.routes';
 import analyticsRoutes from './routes/analytics.routes';
+import ratingRoutes from './routes/rating.routes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -51,6 +52,7 @@ app.use(`${API}${ROUTES.USERS.BASE}`, userRoutes);
 app.use(`${API}${ROUTES.DOCTORS.BASE}`, doctorRoutes);
 app.use(`${API}${ROUTES.APPOINTMENTS.BASE}`, appointmentRoutes);
 app.use(`${API}${ROUTES.ANALYTICS.BASE}`, analyticsRoutes);
+app.use(`${API}${ROUTES.RATINGS.BASE}`, ratingRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -88,7 +90,7 @@ app.listen(PORT, () => {
       const expiredAppointments = await prisma.appointment.findMany({
         where: {
           status: AppointmentStatus.APPROVED,
-          paymentStatus: PaymentStatus.NOT_INITIATED,
+          paymentStatus: { in: [PaymentStatus.NOT_INITIATED, PaymentStatus.PENDING, PaymentStatus.FAILED] },
           paymentExpiryTime: { lt: new Date() },
         },
         include: {
@@ -192,6 +194,33 @@ app.listen(PORT, () => {
           ).catch((err: unknown) => console.error(`[Reminders] Reminder email failed for ${app.id}:`, err));
         }
         console.log(`[Reminders] Successfully processed ${upcomingAppointments.length} reminders.`);
+      }
+
+      // Background Task: Auto-complete appointments that have ended
+      console.log('[Cleanup] Checking for appointments to auto-complete...');
+      const completedThreshold = new Date();
+      const pastConfirmed = await prisma.appointment.findMany({
+        where: {
+          status: AppointmentStatus.CONFIRMED,
+          appointmentStart: { lt: completedThreshold },
+        },
+      });
+
+      if (pastConfirmed.length > 0) {
+        let completedCount = 0;
+        for (const app of pastConfirmed) {
+          const endTime = new Date(new Date(app.appointmentStart).getTime() + app.durationMinutes * 60000);
+          if (new Date() > endTime) {
+            await prisma.appointment.update({
+              where: { id: app.id },
+              data: { status: AppointmentStatus.COMPLETED },
+            });
+            completedCount++;
+          }
+        }
+        if (completedCount > 0) {
+          console.log(`[Cleanup] Successfully auto-completed ${completedCount} appointments.`);
+        }
       }
     } catch (error) {
       console.error('[Cleanup] Error in background task:', error);

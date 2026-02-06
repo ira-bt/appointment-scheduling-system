@@ -107,11 +107,11 @@ export default function AnalyticsTab() {
             isPositive: true
         },
         {
-            label: 'Rejected/Cancelled',
-            value: summary.cancelledAppointments,
-            icon: AlertCircle,
-            color: 'bg-orange-500',
-            trend: 'Stable',
+            label: 'Average Rating',
+            value: summary.averageRating.toFixed(1),
+            icon: Star,
+            color: 'bg-yellow-500',
+            trend: 'Direct Feedback',
             isPositive: true
         },
     ];

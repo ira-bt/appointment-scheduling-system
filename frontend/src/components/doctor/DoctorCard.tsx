@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { User, DoctorProfile } from '@/src/types/user.types';
+import { Star } from 'lucide-react';
 
 interface DoctorCardProps {
     doctor: User & { doctorProfile: DoctorProfile };
@@ -35,6 +36,20 @@ export default function DoctorCard({ doctor, onViewProfile }: DoctorCardProps) {
                                 </svg>
                                 {city || 'Location N/A'}
                             </p>
+                            {doctorProfile.averageRating !== undefined && doctorProfile.averageRating > 0 && (
+                                <div className="flex items-center gap-1 mt-1">
+                                    <div className="flex items-center">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <Star
+                                                key={star}
+                                                className={`w-3 h-3 ${star <= Math.round(doctorProfile.averageRating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200'}`}
+                                            />
+                                        ))}
+                                    </div>
+                                    <span className="text-xs font-bold text-gray-700">{doctorProfile.averageRating}</span>
+                                    <span className="text-xs text-gray-400">({doctorProfile.reviewCount})</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="text-right">
