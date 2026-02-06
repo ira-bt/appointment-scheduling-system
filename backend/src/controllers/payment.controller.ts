@@ -206,8 +206,14 @@ export class PaymentController {
                 const expiredAppId = expiredSession.metadata?.appointmentId;
 
                 if (expiredAppId) {
-                    await prisma.appointment.update({
-                        where: { id: expiredAppId },
+                    // Only cancel if it's not already paid (CONFIRMED) and the expired session
+                    // is actually the one currently attached to the appointment.
+                    await prisma.appointment.updateMany({
+                        where: {
+                            id: expiredAppId,
+                            status: { not: AppointmentStatus.CONFIRMED },
+                            stripePaymentIntentId: expiredSession.id // Must match current session
+                        },
                         data: {
                             paymentStatus: PaymentStatus.FAILED,
                         }

@@ -321,7 +321,8 @@ export class AppointmentController {
                                 }
                             }
                         },
-                        medicalReports: true
+                        medicalReports: true,
+                        rating: true
                     },
                     orderBy: {
                         appointmentStart: type === 'past' ? 'desc' : 'asc',
@@ -333,7 +334,7 @@ export class AppointmentController {
             ]);
 
             // Transform data to match frontend expectations (flatten doctor.user)
-            const formattedAppointments = (appointments as AppointmentWithDoctorMinimal[]).map(app => {
+            let formattedAppointments = (appointments as AppointmentWithDoctorMinimal[]).map(app => {
                 const { doctor, ...rest } = app;
 
                 return {
@@ -349,6 +350,17 @@ export class AppointmentController {
                     }
                 };
             });
+
+            // Manual sorting for 'past' type: COMPLETED first, then by date desc
+            if (type === 'past') {
+                formattedAppointments.sort((a, b) => {
+                    if (a.status === AppointmentStatus.COMPLETED && b.status !== AppointmentStatus.COMPLETED) return -1;
+                    if (a.status !== AppointmentStatus.COMPLETED && b.status === AppointmentStatus.COMPLETED) return 1;
+
+                    // Fallback to date sorting
+                    return new Date(b.appointmentStart).getTime() - new Date(a.appointmentStart).getTime();
+                });
+            }
 
             res.status(200).json({
                 success: true,

@@ -3,8 +3,9 @@ import { formatDate, formatTime } from '@/src/utils/date';
 import Image from 'next/image';
 import { useState, useEffect, useMemo } from 'react';
 import { paymentService } from '@/src/services/payment.service';
-import { Loader2, CreditCard, ChevronRight, Clock } from 'lucide-react';
+import { Loader2, CreditCard, ChevronRight, Clock, Star } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import ReviewModal from './ReviewModal';
 
 interface AppointmentCardProps {
     appointment: Appointment;
@@ -21,6 +22,7 @@ const statusColors: Record<AppointmentStatus, string> = {
 
 export default function AppointmentCard({ appointment }: AppointmentCardProps) {
     const [paymentLoading, setPaymentLoading] = useState(false);
+    const [showReviewModal, setShowReviewModal] = useState(false);
     const doctor = appointment.doctor;
     const doctorName = doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'Unknown Doctor';
     const specialty = doctor?.doctorProfile?.specialty || 'General';
@@ -151,7 +153,6 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
                         </div>
                     )}
                     <div className="flex gap-2">
-                        <button className="btn btn-sm btn-outline border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg">Details</button>
                         {appointment.status === AppointmentStatus.APPROVED && !isPast && !isExpired && (
                             <button
                                 onClick={handlePayment}
@@ -166,9 +167,34 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
                                 {paymentLoading ? 'Redirecting...' : 'Pay Now'}
                             </button>
                         )}
+                        {appointment.status === AppointmentStatus.COMPLETED && !appointment.rating && (
+                            <button
+                                onClick={() => setShowReviewModal(true)}
+                                className="btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border-none rounded-lg font-bold"
+                            >
+                                Give Review
+                            </button>
+                        )}
+                        {appointment.status === AppointmentStatus.COMPLETED && appointment.rating && (
+                            <div className="flex items-center gap-1 text-yellow-500 bg-yellow-50 px-2 py-1 rounded-md border border-yellow-100">
+                                <Star className="w-3.5 h-3.5 fill-yellow-500" />
+                                <span className="text-xs font-bold">{appointment.rating.rating}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
-        </div>
+
+            {showReviewModal && (
+                <ReviewModal
+                    appointmentId={appointment.id}
+                    doctorName={doctorName}
+                    onClose={() => setShowReviewModal(false)}
+                    onSuccess={() => {
+                        window.location.reload();
+                    }}
+                />
+            )}
+        </div >
     );
 }

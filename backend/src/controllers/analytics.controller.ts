@@ -55,6 +55,14 @@ export class AnalyticsController {
             const fee = doctorProfile?.consultationFee || 0;
             const totalRevenue = revenueAppointments.length * fee;
 
+            // 2.5 Average Rating
+            const ratings = await prisma.rating.findMany({
+                where: { doctorId }
+            });
+            const averageRating = ratings.length > 0
+                ? Number((ratings.reduce((acc, curr) => acc + curr.rating, 0) / ratings.length).toFixed(1))
+                : 0;
+
             // 3. Daily Metrics for the chart
             const dailyMetricsMap = new Map<string, { date: string, appointments: number, revenue: number }>();
 
@@ -78,7 +86,7 @@ export class AnalyticsController {
                 }
             });
 
-            // 5. Total Patients (Unique patients seen overall)
+            // 5. Total Patients (unique overall)
             const uniquePatients = await prisma.appointment.groupBy({
                 by: ['patientId'],
                 where: { doctorId }
@@ -93,7 +101,8 @@ export class AnalyticsController {
                         completedAppointments,
                         cancelledAppointments,
                         totalRevenue,
-                        totalPatients: uniquePatients.length
+                        totalPatients: uniquePatients.length,
+                        averageRating
                     },
                     dailyMetrics: Array.from(dailyMetricsMap.values())
                 },

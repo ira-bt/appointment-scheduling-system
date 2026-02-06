@@ -86,7 +86,15 @@ export class DoctorController {
                 prisma.user.findMany({
                     where,
                     include: {
-                        doctorProfile: true,
+                        doctorProfile: {
+                            include: {
+                                ratingsReceived: {
+                                    select: {
+                                        rating: true
+                                    }
+                                }
+                            }
+                        },
                     },
                     skip,
                     take: safeLimit,
@@ -97,10 +105,22 @@ export class DoctorController {
                 prisma.user.count({ where }),
             ]);
 
-            // Remove passwords
+            // Remove passwords and calculate average rating
             const sanitizedDoctors = doctors.map(doc => {
                 const { password, ...doctorWithoutPassword } = doc;
-                return doctorWithoutPassword;
+                const ratings = doctorWithoutPassword.doctorProfile?.ratingsReceived || [];
+                const averageRating = ratings.length > 0
+                    ? Number((ratings.reduce((acc, curr) => acc + curr.rating, 0) / ratings.length).toFixed(1))
+                    : 0;
+
+                return {
+                    ...doctorWithoutPassword,
+                    doctorProfile: {
+                        ...doctorWithoutPassword.doctorProfile,
+                        averageRating,
+                        reviewCount: ratings.length
+                    }
+                };
             });
 
             res.status(200).json({
@@ -146,7 +166,15 @@ export class DoctorController {
                     doctorProfile: { isNot: null }
                 },
                 include: {
-                    doctorProfile: true,
+                    doctorProfile: {
+                        include: {
+                            ratingsReceived: {
+                                select: {
+                                    rating: true
+                                }
+                            }
+                        }
+                    },
                 },
             });
 
@@ -160,11 +188,24 @@ export class DoctorController {
             }
 
             const { password, ...doctorWithoutPassword } = doctor;
+            const ratings = doctorWithoutPassword.doctorProfile?.ratingsReceived || [];
+            const averageRating = ratings.length > 0
+                ? Number((ratings.reduce((acc, curr) => acc + curr.rating, 0) / ratings.length).toFixed(1))
+                : 0;
+
+            const sanitizedDoctor = {
+                ...doctorWithoutPassword,
+                doctorProfile: {
+                    ...doctorWithoutPassword.doctorProfile,
+                    averageRating,
+                    reviewCount: ratings.length
+                }
+            };
 
             res.status(200).json({
                 success: true,
                 message: 'Doctor fetched successfully',
-                data: doctorWithoutPassword,
+                data: sanitizedDoctor,
                 statusCode: 200,
             } as IApiResponse);
         } catch (error) {

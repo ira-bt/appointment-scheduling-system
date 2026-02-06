@@ -2,6 +2,7 @@
 
 import { User, DoctorProfile } from '@/src/types/user.types';
 import Link from 'next/link';
+import { Star } from 'lucide-react';
 
 interface DoctorDetailsModalProps {
     doctor: (User & { doctorProfile: DoctorProfile }) | null;
@@ -58,8 +59,20 @@ export default function DoctorDetailsModal({ doctor, onClose }: DoctorDetailsMod
                         </div>
                         <div className="bg-gray-50 p-4 rounded-xl text-center">
                             <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Ratings</p>
-                            <div className="flex items-center justify-center text-xl font-bold text-gray-800">
-                                <span className="text-yellow-400 mr-1">★</span> 4.8
+                            <div className="flex flex-col items-center justify-center">
+                                <div className="flex items-center text-xl font-bold text-gray-800">
+                                    <span className="text-yellow-400 mr-1">★</span>
+                                    {doctorProfile?.averageRating || '0.0'}
+                                </div>
+                                <div className="flex items-center gap-0.5 mt-1">
+                                    {[1, 2, 3, 4, 5].map((s) => (
+                                        <Star
+                                            key={s}
+                                            className={`w-3 h-3 ${s <= Math.round(doctorProfile?.averageRating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                                        />
+                                    ))}
+                                    <span className="text-[10px] text-gray-400 ml-1">({doctorProfile?.reviewCount || 0})</span>
+                                </div>
                             </div>
                         </div>
                     </div>

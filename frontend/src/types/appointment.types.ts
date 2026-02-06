@@ -20,6 +20,16 @@ export enum AppointmentStatus {
     CANCELLED = 'CANCELLED'
 }
 
+export interface Rating {
+    id: string;
+    appointmentId: string;
+    patientId: string;
+    doctorId: string;
+    rating: number;
+    review?: string;
+    createdAt: string | Date;
+}
+
 export interface Appointment {
     id: string;
     patientId: string;
@@ -35,6 +45,7 @@ export interface Appointment {
     paymentExpiryTime?: string | Date;
     createdAt: string | Date;
     updatedAt: string | Date;
+    rating?: Rating;
     doctor?: User & {
         doctorProfile: DoctorProfile;
     };
