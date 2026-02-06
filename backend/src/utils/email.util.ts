@@ -447,6 +447,58 @@ class EmailService {
       text: `Hi ${patientName}, your appointment with Dr. ${doctorName} on ${date} has been cancelled because the 20-minute payment window expired.`,
     });
   }
+  
+  /**
+   * Send appointment reminder email to patient (1 hour before)
+   */
+  public async sendAppointmentReminder(
+    patientEmail: string,
+    patientName: string,
+    doctorName: string,
+    time: string
+  ): Promise<boolean> {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          .container { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 8px; }
+          .header { background-color: #4f46e5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { padding: 20px; line-height: 1.6; color: #374151; }
+          .details { background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0; }
+          .footer { text-align: center; font-size: 0.875rem; color: #6b7280; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Appointment Reminder</h1>
+          </div>
+          <div class="content">
+            <p>Hi <strong>${patientName}</strong>,</p>
+            <p>This is a friendly reminder that you have an appointment scheduled for <strong>in 1 hour</strong>.</p>
+            <div class="details">
+              <p><strong>Doctor:</strong> Dr. ${doctorName}</p>
+              <p><strong>Time:</strong> ${time}</p>
+            </div>
+            <p>Please ensure you are ready and available at the scheduled time. If it's a virtual consultation, the link will be available in your dashboard.</p>
+            <p>Best regards,<br />The MediScheduler Team</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2026 MediScheduler. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return await this.sendEmail({
+      to: patientEmail,
+      subject: 'Reminder: Your Appointment is in 1 Hour - MediScheduler',
+      html,
+      text: `Hi ${patientName}, this is a reminder that you have an appointment with Dr. ${doctorName} today at ${time} (in 1 hour).`,
+    });
+  }
 }
 
 export default new EmailService();

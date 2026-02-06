@@ -151,7 +151,47 @@ app.listen(PORT, () => {
             dateStr
           ).catch((err: unknown) => console.error(`[Cleanup] Rejection email failed for ${app.id}:`, err));
         }
-        console.log(`[Cleanup] Successfully rejected ${stalePending.length} stale requests.`);
+      }
+
+      // Background Task: Send reminders 1 hour before appointment
+      // Logic: Find CONFIRMED appointments starting in 55-60 minutes
+      const now = new Date();
+      const oneHourFromNowStart = new Date(now.getTime() + 55 * 60 * 1000);
+      const oneHourFromNowEnd = new Date(now.getTime() + 60 * 60 * 1000);
+
+      console.log(`[Reminders] Checking for appointments starting between ${oneHourFromNowStart.toISOString()} and ${oneHourFromNowEnd.toISOString()}`);
+
+      const upcomingAppointments = await prisma.appointment.findMany({
+        where: {
+          status: AppointmentStatus.CONFIRMED,
+          appointmentStart: {
+            gte: oneHourFromNowStart,
+            lt: oneHourFromNowEnd,
+          },
+        },
+        include: {
+          patient: { include: { user: true } },
+          doctor: { include: { user: true } },
+        },
+      });
+
+      if (upcomingAppointments.length > 0) {
+        console.log(`[Reminders] Found ${upcomingAppointments.length} upcoming appointments. Sending reminders...`);
+        for (const app of upcomingAppointments) {
+          const timeStr = new Date(app.appointmentStart).toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          });
+
+          await emailService.sendAppointmentReminder(
+            app.patient.user.email,
+            app.patient.user.firstName,
+            `${app.doctor.user.firstName} ${app.doctor.user.lastName}`,
+            timeStr
+          ).catch((err: unknown) => console.error(`[Reminders] Reminder email failed for ${app.id}:`, err));
+        }
+        console.log(`[Reminders] Successfully processed ${upcomingAppointments.length} reminders.`);
       }
     } catch (error) {
       console.error('[Cleanup] Error in background task:', error);
