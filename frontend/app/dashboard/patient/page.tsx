@@ -5,10 +5,13 @@ import { useAuth } from '@/src/auth/auth.context';
 import Link from 'next/link';
 import { APP_ROUTES } from '@/src/constants/app-routes';
 import { UserRole } from '@/src/types/user.types';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { appointmentService } from '@/src/services/appointment.service';
 import { Appointment } from '@/src/types/appointment.types';
 import AppointmentCard from '@/src/components/appointments/AppointmentCard';
+import Pagination from '@/src/components/common/Pagination';
+import SortDropdown from '@/src/components/common/SortDropdown';
+import { Calendar, Clock, CheckCircle, ArrowRight } from 'lucide-react';
 
 export default function PatientDashboard() {
     const { user, logout } = useAuth();
@@ -17,34 +20,55 @@ export default function PatientDashboard() {
     const [type, setType] = useState<'upcoming' | 'past'>('upcoming');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalAppointments, setTotalAppointments] = useState(0);
+    const [sortBy, setSortBy] = useState('appointmentStart');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+    const sortOptions = [
+        { label: 'Date (Soonest)', value: 'appointmentStart-asc' },
+        { label: 'Date (Latest)', value: 'appointmentStart-desc' },
+        { label: 'Status', value: 'status-asc' },
+    ];
+
+    const fetchAppointments = useCallback(async () => {
+        setIsLoadingAppointments(true);
+        try {
+            const response = await appointmentService.getPatientAppointments({
+                type,
+                page,
+                limit: 5,
+                sortBy,
+                sortOrder
+            });
+            setAppointments(response.data.appointments);
+            setTotalPages(response.data.pagination.totalPages);
+            setTotalAppointments(response.data.pagination.total);
+        } catch (error) {
+            console.error('Failed to fetch appointments:', error);
+        } finally {
+            setIsLoadingAppointments(false);
+        }
+    }, [type, page, sortBy, sortOrder]);
 
     useEffect(() => {
-        const fetchAppointments = async () => {
-            setIsLoadingAppointments(true);
-            try {
-                const response = await appointmentService.getPatientAppointments({
-                    type,
-                    page,
-                    limit: 5
-                });
-                setAppointments(response.data.appointments);
-                setTotalPages(response.data.pagination.totalPages);
-            } catch (error) {
-                console.error('Failed to fetch appointments:', error);
-            } finally {
-                setIsLoadingAppointments(false);
-            }
-        };
-
         if (user) {
             fetchAppointments();
         }
-    }, [user, type, page]);
+    }, [user, fetchAppointments]);
 
-    const handleTypeChange = (newType: 'upcoming' | 'past') => {
+    const handleTypeChange = useCallback((newType: 'upcoming' | 'past') => {
         setType(newType);
         setPage(1);
-    };
+        setSortBy('appointmentStart');
+        setSortOrder(newType === 'upcoming' ? 'asc' : 'desc');
+    }, []);
+
+    const handleSortChange = useCallback((value: string) => {
+        const [field, order] = value.split('-') as [string, 'asc' | 'desc'];
+        setSortBy(field);
+        setSortOrder(order || 'asc');
+        setPage(1);
+    }, []);
 
     return (
         <ProtectedRoute allowedRoles={[UserRole.PATIENT]}>
@@ -81,6 +105,7 @@ export default function PatientDashboard() {
                             href={APP_ROUTES.DOCTORS}
                             className="btn bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-lg shadow-md border-none w-full md:w-auto"
                         >
+                            <Calendar className="w-4 h-4 mr-2" />
                             Book New Appointment
                         </Link>
                     </header>
@@ -90,41 +115,49 @@ export default function PatientDashboard() {
                         <div className="stats shadow bg-white">
                             <div className="stat">
                                 <div className="stat-figure text-blue-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-8 h-8 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <Clock className="w-8 h-8" />
                                 </div>
-                                <div className="stat-title text-gray-500">Upcoming Appointments</div>
-                                <div className="stat-value text-blue-600">{type === 'upcoming' ? appointments.length : '-'}</div>
+                                <div className="stat-title text-gray-500">Scheduled Appointments</div>
+                                <div className="stat-value text-blue-600">{totalAppointments}</div>
+                                <div className="stat-desc text-gray-400">Total {type}</div>
                             </div>
                         </div>
 
                         <div className="stats shadow bg-white">
                             <div className="stat">
                                 <div className="stat-figure text-green-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-8 h-8 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <CheckCircle className="w-8 h-8" />
                                 </div>
-                                <div className="stat-title text-gray-500">Healthy Habits</div>
-                                <div className="stat-desc font-medium text-green-600">Keep up the good work!</div>
+                                <div className="stat-title text-gray-500">Account Status</div>
+                                <div className="stat-value text-green-600 text-2xl mt-1">Verified</div>
+                                <div className="stat-desc font-medium text-green-600">Patient Dashboard Active</div>
                             </div>
                         </div>
                     </div>
 
                     {/* Appointments Section */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div className="border-b border-gray-100 p-2">
-                            <div className="tabs tabs-boxed bg-white gap-2">
+                        <div className="border-b border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="tabs tabs-boxed bg-gray-50 p-1 w-fit">
                                 <button
                                     onClick={() => handleTypeChange('upcoming')}
-                                    className={`tab h-10 px-6 font-medium transition-all ${type === 'upcoming' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}
+                                    className={`tab h-9 px-4 text-sm font-semibold transition-all ${type === 'upcoming' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                                 >
                                     Upcoming
                                 </button>
                                 <button
                                     onClick={() => handleTypeChange('past')}
-                                    className={`tab h-10 px-6 font-medium transition-all ${type === 'past' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}
+                                    className={`tab h-9 px-4 text-sm font-semibold transition-all ${type === 'past' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                                 >
                                     Past History
                                 </button>
                             </div>
+
+                            <SortDropdown
+                                options={sortOptions}
+                                currentValue={`${sortBy}-${sortOrder}`}
+                                onSortChange={handleSortChange}
+                            />
                         </div>
 
                         <div className="p-6">
@@ -139,37 +172,17 @@ export default function PatientDashboard() {
                                         <AppointmentCard key={appointment.id} appointment={appointment} />
                                     ))}
 
-                                    {/* Pagination */}
-                                    {totalPages > 1 && (
-                                        <div className="flex justify-center mt-8">
-                                            <div className="join bg-white border border-gray-100 shadow-sm">
-                                                <button
-                                                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                                                    disabled={page === 1}
-                                                    className="join-item btn btn-ghost disabled:bg-transparent"
-                                                >
-                                                    «
-                                                </button>
-                                                <button className="join-item btn btn-ghost pointer-events-none">
-                                                    Page {page} of {totalPages}
-                                                </button>
-                                                <button
-                                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                                    disabled={page === totalPages}
-                                                    className="join-item btn btn-ghost disabled:bg-transparent"
-                                                >
-                                                    »
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
+                                    <Pagination
+                                        currentPage={page}
+                                        totalPages={totalPages}
+                                        onPageChange={(p) => setPage(p)}
+                                        className="mt-8"
+                                    />
                                 </div>
                             ) : (
                                 <div className="text-center py-16">
                                     <div className="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
+                                        <Calendar className="h-10 w-10 text-blue-300" />
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-800 mb-2">No {type} appointments</h3>
                                     <p className="text-gray-500 mb-8 max-w-sm mx-auto">
@@ -178,8 +191,9 @@ export default function PatientDashboard() {
                                             : "You don't have any past appointment records yet."}
                                     </p>
                                     {type === 'upcoming' && (
-                                        <Link href={APP_ROUTES.DOCTORS} className="btn bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-lg shadow-md border-none">
+                                        <Link href={APP_ROUTES.DOCTORS} className="btn bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-lg shadow-md border-none inline-flex items-center gap-2">
                                             Find a Doctor
+                                            <ArrowRight className="w-4 h-4" />
                                         </Link>
                                     )}
                                 </div>

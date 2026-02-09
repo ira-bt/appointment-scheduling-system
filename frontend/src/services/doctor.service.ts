@@ -1,6 +1,7 @@
 import { apiClient } from '@/src/utils/api-client';
 import { API } from '../constants/api-routes';
 import { User, DoctorProfile } from '../types/user.types';
+
 import { AppointmentStatus } from '../types/appointment.types';
 
 export interface DoctorQueryParams {
@@ -11,6 +12,8 @@ export interface DoctorQueryParams {
     page?: number;
     limit?: number;
     search?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
 }
 
 export interface DoctorListResponse {
@@ -103,7 +106,13 @@ export const doctorService = {
     /**
      * Get appointments for the logged-in doctor
      */
-    getAppointments: async (params?: { status?: AppointmentStatus; page?: number; limit?: number }) => {
+    getAppointments: async (params?: {
+        status?: AppointmentStatus;
+        page?: number;
+        limit?: number;
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
+    }) => {
         const response = await apiClient.get(API.APPOINTMENTS.LIST_DOCTOR, { params });
         return response.data;
     },
