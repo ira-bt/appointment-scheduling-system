@@ -10,6 +10,11 @@ import Link from 'next/link';
 import { APP_ROUTES } from '@/src/constants/app-routes';
 import ProtectedRoute from '@/src/components/auth/ProtectedRoute';
 import { getErrorMessage } from '@/src/utils/api-error';
+import { ArrowLeft, Stethoscope, MessageSquare } from 'lucide-react';
+import SearchBox from '@/src/components/common/SearchBox';
+import FilterBar from '@/src/components/common/FilterBar';
+import Pagination from '@/src/components/common/Pagination';
+import SortDropdown from '@/src/components/common/SortDropdown';
 
 export default function DoctorDiscoveryPage() {
     const [doctors, setDoctors] = useState<(User & { doctorProfile: DoctorProfile })[]>([]);
@@ -22,11 +27,65 @@ export default function DoctorDiscoveryPage() {
         specialty: '',
         city: '',
         search: '',
+        sortBy: 'firstName',
+        sortOrder: 'asc'
     });
+
     const [pagination, setPagination] = useState({
         total: 0,
         totalPages: 0,
     });
+
+    const filterGroups = [
+        {
+            name: 'specialty',
+            label: 'Specialty',
+            type: 'select' as const,
+            options: SPECIALTIES.map(s => ({ label: s, value: s }))
+        },
+        {
+            name: 'city',
+            label: 'City',
+            type: 'select' as const,
+            options: CITIES.map(c => ({ label: c, value: c }))
+        }
+    ];
+
+    const sortOptions = [
+        { label: 'Name (A-Z)', value: 'firstName-asc' },
+        { label: 'Name (Z-A)', value: 'firstName-desc' },
+        { label: 'Consultation Fee (Low-High)', value: 'consultationFee-asc' },
+        { label: 'Consultation Fee (High-Low)', value: 'consultationFee-desc' },
+        { label: 'Experience (High-Low)', value: 'experience-desc' }
+    ];
+
+    const handleSortChange = useCallback((value: string) => {
+        const [sortBy, sortOrder] = value.split('-') as [string, 'asc' | 'desc'];
+        setFilters(prev => ({ ...prev, sortBy, sortOrder, page: 1 }));
+    }, []);
+
+    const handleSearch = useCallback((search: string) => {
+        setFilters(prev => ({ ...prev, search, page: 1 }));
+    }, []);
+
+    const handleFilterUpdate = useCallback((name: string, value: string) => {
+        setFilters(prev => ({ ...prev, [name]: value, page: 1 }));
+    }, []);
+
+    const handleClearFilters = useCallback(() => {
+        setFilters({
+            page: 1,
+            limit: 4,
+            specialty: '',
+            city: '',
+            search: '',
+            sortBy: 'firstName',
+            sortOrder: 'asc'
+        });
+    }, []);
+
+    // ... fetchDoctors remains basically the same, just adjust the debounce logic if needed
+    // Actually, SearchBox handles debounce now. So we can remove the timer from useEffect.
 
     const fetchDoctors = useCallback(async () => {
         try {
@@ -41,27 +100,18 @@ export default function DoctorDiscoveryPage() {
             }
         } catch (err: unknown) {
             setError(getErrorMessage(err));
-            console.error(err);
         } finally {
             setLoading(false);
         }
     }, [filters]);
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            fetchDoctors();
-        }, 300); // Debounce search
-        return () => clearTimeout(timer);
+        fetchDoctors();
     }, [fetchDoctors]);
 
-    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFilters(prev => ({ ...prev, [name]: value, page: 1 }));
-    };
-
-    const handlePageChange = (newPage: number) => {
+    const handlePageChange = useCallback((newPage: number) => {
         setFilters(prev => ({ ...prev, page: newPage }));
-    };
+    }, []);
 
     const handleViewProfile = (doctor: User & { doctorProfile: DoctorProfile }) => {
         setSelectedDoctor(doctor);
@@ -76,28 +126,18 @@ export default function DoctorDiscoveryPage() {
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
                                 <Link href={APP_ROUTES.DASHBOARD.BASE} className="text-blue-600 text-sm font-medium hover:underline flex items-center mb-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                    </svg>
+                                    <ArrowLeft className="h-4 w-4 mr-1" />
                                     Back
                                 </Link>
                                 <h1 className="text-3xl font-bold text-gray-800">Find a Doctor</h1>
                                 <p className="text-gray-600">Search and book appointments with top healthcare providers</p>
                             </div>
 
-                            <div className="flex-1 max-w-md relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
-                                </div>
-                                <input
-                                    type="text"
-                                    name="search"
+                            <div className="flex-1 max-w-md">
+                                <SearchBox
                                     placeholder="Search by doctor name..."
-                                    className="input input-bordered w-full pl-10 h-12 bg-white"
-                                    value={filters.search}
-                                    onChange={handleFilterChange}
+                                    initialValue={filters.search}
+                                    onSearch={handleSearch}
                                 />
                             </div>
                         </div>
@@ -108,68 +148,37 @@ export default function DoctorDiscoveryPage() {
                     <div className="flex flex-col lg:flex-row gap-8">
                         {/* Filters Sidebar */}
                         <aside className="w-full lg:w-72 space-y-6">
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                                <h2 className="text-lg font-bold text-gray-800 mb-6 flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                                    </svg>
-                                    Filters
-                                </h2>
+                            <FilterBar
+                                groups={filterGroups}
+                                selectedFilters={{ specialty: filters.specialty || '', city: filters.city || '' }}
+                                onFilterChange={handleFilterUpdate}
+                                onClearAll={handleClearFilters}
+                            />
 
-                                <div className="space-y-4">
-                                    <div className="form-control">
-                                        <label className="label">
-                                            <span className="label-text font-semibold text-gray-700">Specialty</span>
-                                        </label>
-                                        <select
-                                            name="specialty"
-                                            className="select select-bordered w-full bg-white shadow-sm"
-                                            value={filters.specialty}
-                                            onChange={handleFilterChange}
-                                        >
-                                            <option value="">All Specialties</option>
-                                            {SPECIALTIES.map(s => (
-                                                <option key={s} value={s}>{s}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div className="form-control">
-                                        <label className="label">
-                                            <span className="label-text font-semibold text-gray-700">City</span>
-                                        </label>
-                                        <select
-                                            name="city"
-                                            className="select select-bordered w-full bg-white shadow-sm"
-                                            value={filters.city}
-                                            onChange={handleFilterChange}
-                                        >
-                                            <option value="">All Cities</option>
-                                            {CITIES.map(c => (
-                                                <option key={c} value={c}>{c}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <button
-                                        onClick={() => setFilters({ page: 1, limit: 4, specialty: '', city: '', search: '' })}
-                                        className="btn btn-outline btn-sm w-full mt-4"
-                                    >
-                                        Clear Filters
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Help Widget */}
                             <div className="bg-blue-600 p-6 rounded-2xl text-white">
                                 <h3 className="font-bold text-lg mb-2">Need Help?</h3>
                                 <p className="text-blue-100 text-sm mb-4">Can&apos;t find the right doctor? Our support team is here to assist you 24/7.</p>
-                                <button className="btn bg-white text-blue-600 border-none hover:bg-blue-50 w-full">Chat with us</button>
+                                <button className="btn bg-white text-blue-600 border-none hover:bg-blue-50 w-full flex items-center justify-center gap-2">
+                                    <MessageSquare className="w-4 h-4" />
+                                    Chat with us
+                                </button>
                             </div>
                         </aside>
 
                         {/* Doctors Listing */}
                         <main className="flex-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                                <div className="flex items-center gap-2 text-gray-600">
+                                    <Stethoscope className="w-5 h-5 text-blue-600" />
+                                    <span className="font-medium">{pagination.total} Doctors available</span>
+                                </div>
+                                <SortDropdown
+                                    options={sortOptions}
+                                    currentValue={`${filters.sortBy}-${filters.sortOrder}`}
+                                    onSortChange={handleSortChange}
+                                />
+                            </div>
+
                             {loading ? (
                                 <div className="flex flex-col items-center justify-center min-h-[400px]">
                                     <span className="loading loading-spinner loading-lg text-primary mb-4"></span>
@@ -192,36 +201,12 @@ export default function DoctorDiscoveryPage() {
                                         ))}
                                     </div>
 
-                                    {/* Pagination */}
-                                    {pagination.totalPages > 1 && (
-                                        <div className="flex justify-center mt-12 pb-12">
-                                            <div className="join bg-white shadow-sm border border-gray-200">
-                                                <button
-                                                    className="join-item btn btn-sm bg-white border-none disabled:bg-gray-50"
-                                                    onClick={() => handlePageChange(filters.page! - 1)}
-                                                    disabled={filters.page === 1}
-                                                >
-                                                    Previous
-                                                </button>
-                                                {[...Array(pagination.totalPages)].map((_, i) => (
-                                                    <button
-                                                        key={i + 1}
-                                                        className={`join-item btn btn-sm border-none ${filters.page === i + 1 ? 'btn-primary' : 'bg-white hover:bg-gray-100'}`}
-                                                        onClick={() => handlePageChange(i + 1)}
-                                                    >
-                                                        {i + 1}
-                                                    </button>
-                                                ))}
-                                                <button
-                                                    className="join-item btn btn-sm bg-white border-none disabled:bg-gray-50"
-                                                    onClick={() => handlePageChange(filters.page! + 1)}
-                                                    disabled={filters.page === pagination.totalPages}
-                                                >
-                                                    Next
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
+                                    <Pagination
+                                        currentPage={filters.page!}
+                                        totalPages={pagination.totalPages}
+                                        onPageChange={handlePageChange}
+                                        className="mt-12 pb-12"
+                                    />
                                 </div>
                             ) : (
                                 <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-200 text-center">
@@ -233,7 +218,7 @@ export default function DoctorDiscoveryPage() {
                                     <h3 className="text-xl font-bold text-gray-800 mb-2">No Doctors Found</h3>
                                     <p className="text-gray-600 mb-8 max-w-sm mx-auto">We couldn&apos;t find any healthcare providers matching your current search or filters. Try adjusting your criteria.</p>
                                     <button
-                                        onClick={() => setFilters({ page: 1, limit: 4, specialty: '', city: '', search: '' })}
+                                        onClick={handleClearFilters}
                                         className="btn btn-primary px-8"
                                     >
                                         Clear All Filters

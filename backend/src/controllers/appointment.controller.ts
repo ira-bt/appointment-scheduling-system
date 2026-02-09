@@ -67,6 +67,8 @@ export const patientAppointmentQuerySchema = z.object({
     type: z.enum(['upcoming', 'past']).optional(),
     page: z.coerce.number().min(1).default(1),
     limit: z.coerce.number().min(1).max(100).default(10),
+    sortBy: z.enum(['appointmentStart', 'status']).default('appointmentStart'),
+    sortOrder: z.enum(['asc', 'desc']).optional(),
 });
 
 // Validation schema for doctor appointments query
@@ -74,6 +76,8 @@ export const doctorAppointmentQuerySchema = z.object({
     status: z.nativeEnum(AppointmentStatus).optional(),
     page: z.coerce.number().min(1).default(1),
     limit: z.coerce.number().min(1).max(100).default(10),
+    sortBy: z.enum(['appointmentStart', 'status']).default('appointmentStart'),
+    sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
 // Validation schema for creating an appointment
@@ -283,12 +287,12 @@ export class AppointmentController {
     static async getPatientAppointments(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const patientId = req.user.id;
-            const { type, page, limit } = patientAppointmentQuerySchema.parse(req.query);
+            const { type, page, limit, sortBy, sortOrder } = patientAppointmentQuerySchema.parse(req.query);
 
             const skip = (page - 1) * limit;
             const now = new Date();
 
-            // Build where clause with proper type safety
+            // Build where clause
             const where: Prisma.AppointmentWhereInput = {
                 patientId: patientId,
             };
@@ -304,6 +308,9 @@ export class AppointmentController {
                     { status: { in: [AppointmentStatus.COMPLETED, AppointmentStatus.REJECTED, AppointmentStatus.CANCELLED] } }
                 ];
             }
+
+            // Determine sort order
+            const finalSortOrder = sortOrder || (type === 'past' ? 'desc' : 'asc');
 
             // Execute query and count
             const [appointments, total] = await Promise.all([
@@ -325,7 +332,7 @@ export class AppointmentController {
                         rating: true
                     },
                     orderBy: {
-                        appointmentStart: type === 'past' ? 'desc' : 'asc',
+                        [sortBy]: finalSortOrder,
                     },
                     skip,
                     take: limit,
@@ -351,14 +358,29 @@ export class AppointmentController {
                 };
             });
 
-            // Manual sorting for 'past' type: COMPLETED first, then by date desc
+            // Manual sorting for 'past' type: optionally prioritize COMPLETED based on sortBy.
+            // If user explicitly chose a sort field, honor that.
             if (type === 'past') {
                 formattedAppointments.sort((a, b) => {
-                    if (a.status === AppointmentStatus.COMPLETED && b.status !== AppointmentStatus.COMPLETED) return -1;
-                    if (a.status !== AppointmentStatus.COMPLETED && b.status === AppointmentStatus.COMPLETED) return 1;
+                    // Only apply "COMPLETED first" logic if sortBy is 'status' or not explicitly changed from default
+                    if (sortBy === 'status') {
+                        if (a.status === AppointmentStatus.COMPLETED && b.status !== AppointmentStatus.COMPLETED) return -1;
+                        if (a.status !== AppointmentStatus.COMPLETED && b.status === AppointmentStatus.COMPLETED) return 1;
+                    }
 
-                    // Fallback to date sorting
-                    return new Date(b.appointmentStart).getTime() - new Date(a.appointmentStart).getTime();
+                    const valA = a[sortBy as keyof typeof a];
+                    const valB = b[sortBy as keyof typeof b];
+
+                    if (sortBy === 'appointmentStart') {
+                        const dateA = new Date(valA as string).getTime();
+                        const dateB = new Date(valB as string).getTime();
+                        return finalSortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+                    }
+
+                    // For other fields (like status alphabetical)
+                    if (String(valA) < String(valB)) return finalSortOrder === 'asc' ? -1 : 1;
+                    if (String(valA) > String(valB)) return finalSortOrder === 'asc' ? 1 : -1;
+                    return 0;
                 });
             }
 
@@ -468,7 +490,7 @@ export class AppointmentController {
     static async getDoctorAppointments(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const doctorId = req.user.id;
-            const { status, page, limit } = doctorAppointmentQuerySchema.parse(req.query);
+            const { status, page, limit, sortBy, sortOrder } = doctorAppointmentQuerySchema.parse(req.query);
 
             const skip = (page - 1) * limit;
 
@@ -498,9 +520,10 @@ export class AppointmentController {
                             }
                         },
                         medicalReports: true,
+                        rating: true
                     },
                     orderBy: {
-                        appointmentStart: 'desc',
+                        [sortBy]: sortOrder,
                     },
                     skip,
                     take: limit,

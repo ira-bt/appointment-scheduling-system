@@ -4,7 +4,7 @@ import ProtectedRoute from '@/src/components/auth/ProtectedRoute';
 import { useAuth } from '@/src/auth/auth.context';
 import { UserRole } from '@/src/types/user.types';
 import ManageAvailability from '@/src/components/doctor/ManageAvalability';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { doctorService } from '@/src/services/doctor.service';
 import { Appointment, AppointmentStatus } from '@/src/types/appointment.types';
 import { DashboardTab } from '@/src/types/doctor.types';
@@ -12,8 +12,11 @@ import DoctorAppointmentCard from '@/src/components/doctor/DoctorAppointmentCard
 import { toast } from 'react-hot-toast';
 import { getErrorMessage } from '@/src/utils/api-error';
 import { formatBloodType } from '@/src/utils/healthcare';
-import { Loader2, Users, CalendarDays, Clock, IndianRupee, CreditCard, BarChart3 } from 'lucide-react';
+import { Loader2, Users, CalendarDays, Clock, IndianRupee, CreditCard, BarChart3, ChevronDown } from 'lucide-react';
 import AnalyticsTab from '@/src/components/analytics/AnalyticsTab';
+import Pagination from '@/src/components/common/Pagination';
+import SortDropdown from '@/src/components/common/SortDropdown';
+import FilterBar from '@/src/components/common/FilterBar';
 
 export default function DoctorDashboard() {
     const { user, logout } = useAuth();
@@ -23,21 +26,70 @@ export default function DoctorDashboard() {
     const [activeTab, setActiveTab] = useState<DashboardTab>(DashboardTab.ANALYTICS);
     const [actionLoading, setActionLoading] = useState(false);
 
-    useEffect(() => {
-        fetchAppointments();
-    }, []);
+    // Pagination state
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalAppointments, setTotalAppointments] = useState(0);
 
-    const fetchAppointments = async () => {
+    // Sorting state
+    const [sortBy, setSortBy] = useState('appointmentStart');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+    const sortOptions = [
+        { label: 'Date (Soonest)', value: 'appointmentStart-asc' },
+        { label: 'Date (Latest)', value: 'appointmentStart-desc' },
+        { label: 'Status', value: 'status-asc' },
+    ];
+
+    const fetchAppointments = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await doctorService.getAppointments({ limit: 50 });
+            let statusFilter: AppointmentStatus | undefined;
+            if (activeTab === DashboardTab.REQUESTS) statusFilter = AppointmentStatus.PENDING;
+            if (activeTab === DashboardTab.APPROVED) statusFilter = AppointmentStatus.APPROVED;
+            if (activeTab === DashboardTab.SCHEDULED) statusFilter = AppointmentStatus.CONFIRMED;
+
+            const response = await doctorService.getAppointments({
+                status: statusFilter,
+                page,
+                limit: 10,
+                sortBy,
+                sortOrder
+            });
             setAppointments(response.data.appointments);
+            setTotalPages(response.data.pagination.totalPages);
+            setTotalAppointments(response.data.pagination.total);
         } catch (error) {
             toast.error(getErrorMessage(error));
         } finally {
             setLoading(false);
         }
-    };
+    }, [activeTab, page, sortBy, sortOrder]);
+
+    useEffect(() => {
+        if (user) {
+            fetchAppointments();
+        }
+    }, [user, fetchAppointments]);
+
+    const handleTabChange = useCallback((tab: DashboardTab) => {
+        setActiveTab(tab);
+        setPage(1);
+        if (tab === DashboardTab.REQUESTS || tab === DashboardTab.SCHEDULED) {
+            setSortBy('appointmentStart');
+            setSortOrder('asc');
+        } else {
+            setSortBy('appointmentStart');
+            setSortOrder('desc');
+        }
+    }, []);
+
+    const handleSortChange = useCallback((value: string) => {
+        const [field, order] = value.split('-') as [string, 'asc' | 'desc'];
+        setSortBy(field);
+        setSortOrder(order || 'asc');
+        setPage(1);
+    }, []);
 
     const handleStatusUpdate = async (id: string, status: AppointmentStatus.APPROVED | AppointmentStatus.REJECTED) => {
         try {
@@ -52,41 +104,25 @@ export default function DoctorDashboard() {
         }
     };
 
-    // Derived statistics
+    // Simple stats display
     const stats = useMemo(() => {
-        const today = new Date().toDateString();
-        const pending = appointments.filter(a => a.status === AppointmentStatus.PENDING).length;
-        const totalPatients = new Set(appointments.map(a => a.patientId)).size;
-        const todayCount = appointments.filter(a =>
-            new Date(a.appointmentStart).toDateString() === today &&
-            (a.status === AppointmentStatus.APPROVED || a.status === AppointmentStatus.CONFIRMED)
-        ).length;
+        return {
+            pending: activeTab === DashboardTab.REQUESTS ? totalAppointments : 0,
+            totalPatients: 0,
+            todayCount: 0,
+            earnings: 0
+        };
+    }, [activeTab, totalAppointments]);
 
-        // Estimated earnings (sum of completed consultations)
-        const earnings = appointments.reduce((sum, app) => {
-            if (app.status === AppointmentStatus.COMPLETED) {
-                return sum + (app.consultationFee || 500);
-            }
-            return sum;
-        }, 0);
-
-        return { pending, totalPatients, todayCount, earnings };
-    }, [appointments]);
-
-    const filteredAppointments = useMemo(() => {
-        if (activeTab === DashboardTab.REQUESTS) {
-            return appointments.filter(a => a.status === AppointmentStatus.PENDING);
-        } else if (activeTab === DashboardTab.APPROVED) {
-            return appointments.filter(a => a.status === AppointmentStatus.APPROVED);
-        } else if (activeTab === DashboardTab.SCHEDULED) {
-            return appointments.filter(a => a.status === AppointmentStatus.CONFIRMED);
-        } else {
+    const displayAppointments = useMemo(() => {
+        if (activeTab === DashboardTab.HISTORY) {
             return appointments.filter(a =>
                 a.status === AppointmentStatus.COMPLETED ||
                 a.status === AppointmentStatus.REJECTED ||
                 a.status === AppointmentStatus.CANCELLED
             );
         }
+        return appointments;
     }, [appointments, activeTab]);
 
     return (
@@ -102,7 +138,7 @@ export default function DoctorDashboard() {
 
                         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                             <button
-                                onClick={() => setActiveTab(DashboardTab.ANALYTICS)}
+                                onClick={() => handleTabChange(DashboardTab.ANALYTICS)}
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === DashboardTab.ANALYTICS ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-gray-50'}`}
                             >
                                 <BarChart3 className="w-5 h-5" />
@@ -114,7 +150,7 @@ export default function DoctorDashboard() {
                             </div>
 
                             <button
-                                onClick={() => setActiveTab(DashboardTab.REQUESTS)}
+                                onClick={() => handleTabChange(DashboardTab.REQUESTS)}
                                 className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold transition-all ${activeTab === DashboardTab.REQUESTS ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-gray-50'}`}
                             >
                                 <div className="flex items-center gap-3">
@@ -123,13 +159,13 @@ export default function DoctorDashboard() {
                                 </div>
                                 {stats.pending > 0 && (
                                     <span className={`px-2 py-0.5 rounded-full text-[10px] ${activeTab === DashboardTab.REQUESTS ? 'bg-white text-blue-600' : 'bg-orange-500 text-white'}`}>
-                                        {stats.pending}
+                                        {totalAppointments}
                                     </span>
                                 )}
                             </button>
 
                             <button
-                                onClick={() => setActiveTab(DashboardTab.APPROVED)}
+                                onClick={() => handleTabChange(DashboardTab.APPROVED)}
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === DashboardTab.APPROVED ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-gray-50'}`}
                             >
                                 <CalendarDays className="w-5 h-5" />
@@ -137,7 +173,7 @@ export default function DoctorDashboard() {
                             </button>
 
                             <button
-                                onClick={() => setActiveTab(DashboardTab.SCHEDULED)}
+                                onClick={() => handleTabChange(DashboardTab.SCHEDULED)}
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === DashboardTab.SCHEDULED ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-gray-50'}`}
                             >
                                 <CalendarDays className="w-5 h-5" />
@@ -145,7 +181,7 @@ export default function DoctorDashboard() {
                             </button>
 
                             <button
-                                onClick={() => setActiveTab(DashboardTab.HISTORY)}
+                                onClick={() => handleTabChange(DashboardTab.HISTORY)}
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === DashboardTab.HISTORY ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-gray-50'}`}
                             >
                                 <CalendarDays className="w-5 h-5" />
@@ -232,6 +268,22 @@ export default function DoctorDashboard() {
                             </div>
 
 
+                            {/* List Header */}
+                            {activeTab !== DashboardTab.ANALYTICS && (
+                                <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                                    <h3 className="text-lg font-bold text-gray-800">
+                                        Showing {totalAppointments} {activeTab.toLowerCase()}
+                                    </h3>
+                                    <div className="flex items-center gap-4">
+                                        <SortDropdown
+                                            options={sortOptions}
+                                            currentValue={`${sortBy}-${sortOrder}`}
+                                            onSortChange={handleSortChange}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             {/* List */}
                             <div className="min-h-[400px]">
                                 {activeTab === DashboardTab.ANALYTICS ? (
@@ -241,9 +293,9 @@ export default function DoctorDashboard() {
                                         <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
                                         <p className="text-gray-500 font-medium">Loading your appointments...</p>
                                     </div>
-                                ) : filteredAppointments.length > 0 ? (
-                                    <div className="space-y-4">
-                                        {filteredAppointments.map((appointment) => (
+                                ) : displayAppointments.length > 0 ? (
+                                    <div className="space-y-4 pb-12">
+                                        {displayAppointments.map((appointment) => (
                                             <DoctorAppointmentCard
                                                 key={appointment.id}
                                                 appointment={appointment}
@@ -251,6 +303,13 @@ export default function DoctorDashboard() {
                                                 loading={actionLoading}
                                             />
                                         ))}
+
+                                        <Pagination
+                                            currentPage={page}
+                                            totalPages={totalPages}
+                                            onPageChange={(p) => setPage(p)}
+                                            className="mt-8"
+                                        />
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm text-center px-4">

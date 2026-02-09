@@ -12,8 +12,10 @@ export const doctorQuerySchema = z.object({
     minExperience: z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().optional()),
     maxFee: z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().optional()),
     page: z.coerce.number().default(1),
-    limit: z.coerce.number().default(4),
-    search: z.preprocess((val) => (val === '' ? undefined : val), z.string().optional()), // General search for name
+    limit: z.coerce.number().default(10),
+    search: z.preprocess((val) => (val === '' ? undefined : val), z.string().optional()),
+    sortBy: z.enum(['firstName', 'consultationFee', 'experience', 'averageRating']).default('firstName'),
+    sortOrder: z.enum(['asc', 'desc']).default('asc'),
 });
 
 export class DoctorController {
@@ -31,7 +33,9 @@ export class DoctorController {
                 maxFee,
                 page,
                 limit,
-                search
+                search,
+                sortBy,
+                sortOrder
             } = doctorQuerySchema.parse(req.query);
 
             // Safer pagination values
@@ -39,39 +43,23 @@ export class DoctorController {
             const safeLimit = Math.max(1, Math.min(100, limit));
             const skip = (safePage - 1) * safeLimit;
 
-            // Build where clause with proper type safety
+            // Build where clause
             const where: Prisma.UserWhereInput = {
                 role: Role.DOCTOR,
             };
 
-            // Doctor profile filters with proper type safety
             const profileFilters: Prisma.DoctorProfileWhereInput = {};
+            if (specialty) profileFilters.specialty = specialty;
+            if (minExperience && !isNaN(minExperience)) profileFilters.experience = { gte: minExperience };
+            if (maxFee && !isNaN(maxFee)) profileFilters.consultationFee = { lte: maxFee };
 
-            if (specialty) {
-                profileFilters.specialty = specialty;
-            }
-
-            if (minExperience && !isNaN(minExperience)) {
-                profileFilters.experience = { gte: minExperience };
-            }
-
-            if (maxFee && !isNaN(maxFee)) {
-                profileFilters.consultationFee = { lte: maxFee };
-            }
-
-            // If we have filters for the profile, use them. 
-            // Otherwise, just ensure the profile exists.
             if (Object.keys(profileFilters).length > 0) {
                 where.doctorProfile = profileFilters;
             } else {
                 where.doctorProfile = { isNot: null };
             }
 
-            // User level filters
-            if (city) {
-                where.city = { contains: city, mode: 'insensitive' };
-            }
-
+            if (city) where.city = { contains: city, mode: 'insensitive' };
             if (search) {
                 where.OR = [
                     { firstName: { contains: search, mode: 'insensitive' } },
@@ -79,9 +67,21 @@ export class DoctorController {
                 ];
             }
 
-            console.log('Final Prisma where clause:', JSON.stringify(where, null, 2));
+            // Define sorting
+            let orderBy: Prisma.UserOrderByWithRelationInput = {};
+            if (sortBy === 'firstName') {
+                orderBy = { firstName: sortOrder };
+            } else if (sortBy === 'consultationFee' || sortBy === 'experience') {
+                orderBy = {
+                    doctorProfile: {
+                        [sortBy]: sortOrder
+                    }
+                };
+            }
+            // Note: averageRating is a calculated field, Prisma can't sort by it directly easily without raw queries or stored fields.
+            // For now, if users sort by averageRating, we'll keep sorting by firstName as fallback or handle it if we add a field.
 
-            // Execute query with transaction-like count for pagination
+            // Execute query
             const [doctors, total] = await Promise.all([
                 prisma.user.findMany({
                     where,
@@ -89,18 +89,14 @@ export class DoctorController {
                         doctorProfile: {
                             include: {
                                 ratingsReceived: {
-                                    select: {
-                                        rating: true
-                                    }
+                                    select: { rating: true }
                                 }
                             }
                         },
                     },
                     skip,
                     take: safeLimit,
-                    orderBy: {
-                        firstName: 'asc',
-                    },
+                    orderBy,
                 }),
                 prisma.user.count({ where }),
             ]);

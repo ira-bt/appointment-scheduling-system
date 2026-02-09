@@ -18,7 +18,13 @@ export const appointmentService = {
     /**
      * Get patient appointments
      */
-    getPatientAppointments: async (params?: { type?: 'upcoming' | 'past'; page?: number; limit?: number }) => {
+    getPatientAppointments: async (params?: {
+        type?: 'upcoming' | 'past';
+        page?: number;
+        limit?: number;
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
+    }) => {
         const response = await apiClient.get(API.APPOINTMENTS.LIST_PATIENT, { params });
         return response.data;
     },
