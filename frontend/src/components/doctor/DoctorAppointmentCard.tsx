@@ -1,27 +1,46 @@
-import { Appointment, AppointmentStatus } from '@/src/types/appointment.types';
-import { Calendar, Clock, User, FileText, Check, X, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Appointment, AppointmentStatus, MedicalReport } from '../../types/appointment.types';
+import { Check, X, Clock, User, FileText, Loader2, IndianRupee, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatBloodType } from '@/src/utils/healthcare';
+import UserAvatar from '../common/UserAvatar';
 
 interface DoctorAppointmentCardProps {
     appointment: Appointment;
     onStatusUpdate: (id: string, status: AppointmentStatus.APPROVED | AppointmentStatus.REJECTED) => void;
-    loading?: boolean;
 }
 
-export default function DoctorAppointmentCard({ appointment, onStatusUpdate, loading }: DoctorAppointmentCardProps) {
+export default function DoctorAppointmentCard({ appointment, onStatusUpdate }: DoctorAppointmentCardProps) {
+    const [localAction, setLocalAction] = useState<AppointmentStatus | null>(null);
+    const loading = localAction !== null;
+    const isApproving = localAction === AppointmentStatus.APPROVED;
+    const isRejecting = localAction === AppointmentStatus.REJECTED;
     const isPending = appointment.status === AppointmentStatus.PENDING;
     const startTime = new Date(appointment.appointmentStart);
     const isPast = startTime < new Date();
+
+    const handleAction = async (status: AppointmentStatus.APPROVED | AppointmentStatus.REJECTED) => {
+        try {
+            setLocalAction(status);
+            await onStatusUpdate(appointment.id, status);
+        } finally {
+            // Loading state will either be cleaned up by re-render (list change) 
+            // or reset here if the item stayed in the list
+            setLocalAction(null);
+        }
+    };
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
             {/* Header: Patient Info & Time */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 font-bold border border-blue-100 uppercase">
-                        {appointment.patient?.firstName?.[0]}{appointment.patient?.lastName?.[0]}
-                    </div>
+                    <UserAvatar
+                        src={appointment.patient?.profileImage}
+                        firstName={appointment.patient?.firstName}
+                        size="lg"
+                        className="bg-blue-50 text-blue-600 font-bold border border-blue-100"
+                    />
                     <div>
                         <h3 className="font-bold text-gray-900 text-lg">
                             {appointment.patient?.firstName} {appointment.patient?.lastName}
@@ -51,19 +70,19 @@ export default function DoctorAppointmentCard({ appointment, onStatusUpdate, loa
                     {isPending && !isPast && (
                         <div className="flex gap-2 ml-2">
                             <button
-                                onClick={() => onStatusUpdate(appointment.id, AppointmentStatus.APPROVED)}
+                                onClick={() => handleAction(AppointmentStatus.APPROVED)}
                                 disabled={loading}
                                 className="btn btn-sm btn-success text-white items-center gap-1"
                             >
-                                {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                {isApproving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                                 Approve
                             </button>
                             <button
-                                onClick={() => onStatusUpdate(appointment.id, AppointmentStatus.REJECTED)}
+                                onClick={() => handleAction(AppointmentStatus.REJECTED)}
                                 disabled={loading}
                                 className="btn btn-sm btn-error text-white items-center gap-1"
                             >
-                                {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
+                                {isRejecting ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
                                 Reject
                             </button>
                         </div>

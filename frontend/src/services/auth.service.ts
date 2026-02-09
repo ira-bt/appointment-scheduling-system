@@ -1,6 +1,8 @@
-import { AuthResponse, RegisterRequest, LoginRequest, ForgotPasswordRequest, ResetPasswordRequest, User } from '@/src/types/user.types';
+import axios from 'axios';
+import { AuthResponse, RegisterRequest, LoginRequest, ForgotPasswordRequest, ResetPasswordRequest, User, ChangePasswordRequest } from '@/src/types/user.types';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 import { API } from '../constants/api-routes';
+import { APP_ROUTES } from '../constants/app-routes';
 import { apiClient } from '../utils/api-client';
 
 // Auth API service
@@ -42,6 +44,10 @@ export const authService = {
     const response = await apiClient.get(API.USERS.ME);
     const responseData = response.data as { data: User };
     return responseData.data;
+  },
+  changePassword: async (data: ChangePasswordRequest): Promise<{ message: string }> => {
+    const response = await apiClient.post(API.AUTH.CHANGE_PASSWORD, data);
+    return response.data;
   }
 };
 

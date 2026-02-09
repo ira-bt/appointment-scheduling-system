@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useState, useEffect, useMemo } from 'react';
 import { paymentService } from '@/src/services/payment.service';
 import { Loader2, CreditCard, ChevronRight, Clock, Star } from 'lucide-react';
+import UserAvatar from '../common/UserAvatar';
 import { toast } from 'react-hot-toast';
 import ReviewModal from './ReviewModal';
 
@@ -89,19 +90,12 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:shadow-md transition-shadow">
             <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xl overflow-hidden shrink-0">
-                    {doctor?.profileImage ? (
-                        <Image
-                            src={doctor.profileImage}
-                            alt={doctorName}
-                            width={64}
-                            height={64}
-                            className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        doctor?.firstName?.charAt(0)
-                    )}
-                </div>
+                <UserAvatar
+                    src={doctor?.profileImage}
+                    firstName={doctor?.firstName}
+                    size="lg"
+                    className="bg-blue-50 text-blue-600 font-bold"
+                />
                 <div>
                     <h3 className="font-bold text-gray-800 text-lg">{doctorName}</h3>
                     <p className="text-blue-600 text-sm font-medium">{specialty}</p>

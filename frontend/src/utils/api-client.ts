@@ -33,7 +33,10 @@ apiClient.interceptors.response.use(
 
         // If error is 401 and we haven't retried yet
         // Also skip redirect if we are on login/register endpoints
-        const isAuthEndpoint = originalRequest.url?.includes(API.AUTH.LOGIN) || originalRequest.url?.includes(API.AUTH.REGISTER);
+        const isAuthEndpoint =
+            originalRequest.url?.includes(API.AUTH.LOGIN) ||
+            originalRequest.url?.includes(API.AUTH.REGISTER) ||
+            originalRequest.url?.includes(API.AUTH.CHANGE_PASSWORD);
 
         if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
             originalRequest._retry = true;

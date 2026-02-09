@@ -9,6 +9,8 @@ export interface IUser {
   role: Role;
   city?: string;
   profileImage?: string;
+  patientProfile?: any;
+  doctorProfile?: any;
   createdAt: Date;
   updatedAt: Date;
 }

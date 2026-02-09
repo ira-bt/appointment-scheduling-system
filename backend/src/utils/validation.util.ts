@@ -54,6 +54,8 @@ export const registerSchema = z.object({
     return true; // Additional doctor checks can go here
   }
   return true;
+}, {
+  message: "Invalid role-specific data",
 });
 
 export const loginSchema = z.object({
@@ -73,6 +75,45 @@ export const resetPasswordSchema = z.object({
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
   newPassword: z.string().regex(REGEX.PASSWORD, 'New password must be at least 8 characters with at least 1 uppercase, 1 lowercase, 1 number, and 1 special character'),
+});
+
+// Role-specific fields for validation
+const PATIENT_ONLY_FIELDS = [
+  'bloodType',
+  'allergies',
+  'medicalHistory',
+  'emergencyContactName',
+  'emergencyContactPhone'
+];
+
+const DOCTOR_ONLY_FIELDS = [
+  'bio',
+  'specialty',
+  'experience',
+  'qualification',
+  'consultationFee'
+];
+
+export const updateProfileSchema = z.object({
+  firstName: z.string().regex(REGEX.NAME, 'First name must contain only letters and be at least 2 characters').optional().or(z.literal('')),
+  lastName: z.string().regex(REGEX.NAME, 'Last name must contain only letters and be at least 2 characters').optional().or(z.literal('')),
+  phoneNumber: z.string().regex(REGEX.PHONE, 'Invalid phone number format').optional().or(z.literal('')),
+  city: CitySchema.optional(),
+
+  // Role-agnostic but handled specifically in controller based on role
+  // Patient-specific fields
+  bloodType: z.preprocess((val) => (val === '' ? undefined : val), BloodTypeSchema.optional()),
+  allergies: z.string().optional(),
+  medicalHistory: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().regex(REGEX.PHONE, 'Invalid emergency contact phone number format').optional().or(z.literal('')),
+
+  // Doctor-specific fields
+  bio: z.string().optional(),
+  specialty: z.preprocess((val) => (val === '' ? undefined : val), SpecialtySchema.optional()),
+  experience: z.number().min(0, 'Experience cannot be negative').optional(),
+  qualification: z.string().optional(),
+  consultationFee: z.number().min(0, 'Consultation fee cannot be negative').optional(),
 });
 
 // Validation middleware
@@ -147,6 +188,47 @@ export const validateResetPasswordBody = (req: Request, res: Response, next: Nex
 export const validateChangePasswordBody = (req: Request, res: Response, next: NextFunction) => {
   try {
     changePasswordSchema.parse(req.body);
+    next();
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: error.issues[0].message,
+        errors: error.issues,
+        statusCode: 400,
+      });
+    }
+    next(error);
+  }
+};
+
+export const validateUpdateProfileBody = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const role = req.user?.role;
+    const bodyKeys = Object.keys(req.body);
+
+    // Strict role-based field checking
+    if (role === Role.DOCTOR) {
+      const invalidFields = bodyKeys.filter(key => PATIENT_ONLY_FIELDS.includes(key));
+      if (invalidFields.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Doctors cannot update patient-specific fields: ${invalidFields.join(', ')}`,
+          statusCode: 400,
+        });
+      }
+    } else if (role === Role.PATIENT) {
+      const invalidFields = bodyKeys.filter(key => DOCTOR_ONLY_FIELDS.includes(key));
+      if (invalidFields.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Patients cannot update doctor-specific fields: ${invalidFields.join(', ')}`,
+          statusCode: 400,
+        });
+      }
+    }
+
+    updateProfileSchema.parse(req.body);
     next();
   } catch (error) {
     if (error instanceof z.ZodError) {

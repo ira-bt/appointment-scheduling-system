@@ -3,7 +3,7 @@ import { Role } from '@prisma/client';
 import { AppointmentController } from '../controllers/appointment.controller';
 import { protect, restrictTo } from '../middleware/auth.middleware';
 import { ROUTES } from '../constants/routes';
-import { upload } from '../middleware/upload.middleware';
+import { reportUpload } from '../middleware/upload.middleware';
 
 const router = Router();
 
@@ -62,7 +62,7 @@ router.patch(
 router.post(
     ROUTES.APPOINTMENTS.UPLOAD_REPORTS,
     restrictTo(Role.PATIENT),
-    upload.array('reports', 5), // Max 5 files
+    reportUpload.array('reports', 5), // Max 5 files
     AppointmentController.uploadMedicalReports
 );
 

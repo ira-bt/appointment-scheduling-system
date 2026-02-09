@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { User, DoctorProfile } from '@/src/types/user.types';
 import { Star } from 'lucide-react';
+import UserAvatar from '../common/UserAvatar';
 
 interface DoctorCardProps {
     doctor: User & { doctorProfile: DoctorProfile };
@@ -19,11 +20,13 @@ export default function DoctorCard({ doctor, onViewProfile }: DoctorCardProps) {
             <div className="card-body p-5">
                 <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-4">
-                        <div className="avatar">
-                            <div className="w-16 h-16 rounded-xl bg-blue-100 group-hover:bg-blue-600 group-hover:text-white transition-colors flex items-center justify-center text-blue-600 font-bold text-xl">
-                                {firstName[0]}{lastName[0]}
-                            </div>
-                        </div>
+                        <UserAvatar
+                            src={doctor.profileImage}
+                            firstName={doctor.firstName}
+                            size="lg"
+                            variant="square"
+                            className="group-hover:bg-blue-600 group-hover:text-white transition-colors bg-blue-100 text-blue-600"
+                        />
                         <div>
                             <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
                                 Dr. {firstName} {lastName}
