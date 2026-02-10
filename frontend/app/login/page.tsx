@@ -111,15 +111,15 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="card w-full max-w-md bg-white shadow-sm border border-gray-200">
-        <div className="card-body p-8">
+        <div className="card-body p-6 sm:p-8">
           <div className="text-center mb-8">
-            <div className="bg-blue-600 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+            <div className="bg-blue-600 p-4 rounded-3xl w-20 h-20 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-100 ring-4 ring-white">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-gray-800">Welcome Back</h1>
-            <p className="text-gray-600 mt-2">Sign in to your account</p>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">Welcome Back</h1>
+            <p className="text-slate-500 mt-2 text-sm sm:text-base">Sign in to your account</p>
           </div>
 
           {error && (

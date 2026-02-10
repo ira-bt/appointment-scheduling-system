@@ -90,7 +90,6 @@ export default function PatientDashboard() {
                             </label>
                             <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
                                 <li><Link href={APP_ROUTES.DASHBOARD.PATIENT_PROFILE} className="justify-between">Profile</Link></li>
-                                <li><a>Settings</a></li>
                                 <li><button onClick={logout} className="text-red-600 font-bold">Logout</button></li>
                             </ul>
                         </div>
@@ -98,18 +97,18 @@ export default function PatientDashboard() {
                 </div>
 
                 {/* Content */}
-                <div className="p-4 lg:p-8 max-w-5xl mx-auto w-full flex-grow">
-                    <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-800">Hello, {user?.firstName}!</h1>
-                            <p className="text-gray-600">Manage your appointments and healthcare needs.</p>
+                <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full flex-grow">
+                    <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="text-center md:text-left">
+                            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800">Hello, {user?.firstName}!</h1>
+                            <p className="text-slate-500 text-sm sm:text-base mt-1">Manage your appointments and healthcare needs.</p>
                         </div>
                         <Link
                             href={APP_ROUTES.DOCTORS}
-                            className="btn bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-lg shadow-md border-none w-full md:w-auto"
+                            className="btn btn-primary btn-lg rounded-2xl shadow-xl shadow-blue-100 border-none w-full md:w-auto px-10 h-14 flex items-center justify-center gap-2 transition-transform active:scale-95"
                         >
-                            <Calendar className="w-4 h-4 mr-2" />
-                            Book New Appointment
+                            <Calendar className="w-5 h-5" />
+                            <span className="font-bold uppercase tracking-wider text-sm">Book Appointment</span>
                         </Link>
                     </header>
 
@@ -140,19 +139,19 @@ export default function PatientDashboard() {
 
                     {/* Appointments Section */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div className="border-b border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div className="tabs tabs-boxed bg-gray-50 p-1 w-fit">
+                        <div className="border-b border-slate-100 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="tabs tabs-boxed bg-slate-50 p-1 w-full sm:w-fit grid grid-cols-2 sm:flex">
                                 <button
                                     onClick={() => handleTypeChange('upcoming')}
-                                    className={`tab h-9 px-4 text-sm font-semibold transition-all ${type === 'upcoming' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                    className={`tab h-9 px-4 text-xs sm:text-sm font-bold transition-all rounded-lg ${type === 'upcoming' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                                 >
                                     Upcoming
                                 </button>
                                 <button
                                     onClick={() => handleTypeChange('past')}
-                                    className={`tab h-9 px-4 text-sm font-semibold transition-all ${type === 'past' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                    className={`tab h-9 px-4 text-xs sm:text-sm font-bold transition-all rounded-lg ${type === 'past' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                                 >
-                                    Past History
+                                    Past
                                 </button>
                             </div>
 

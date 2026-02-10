@@ -8,7 +8,7 @@ import { formatDateToISO } from '@/src/utils/date';
 interface SlotPickerProps {
     doctorId: string;
     selectedDate: Date;
-    onSlotSelect: (slot: string) => void;
+    onSlotSelect: (slot: string, isoValue: string) => void;
     selectedSlot: string | null;
 }
 
@@ -75,7 +75,7 @@ export default function SlotPicker({ doctorId, selectedDate, onSlotSelect, selec
                         return (
                             <button
                                 key={slot.time}
-                                onClick={() => !isDisabled && onSlotSelect(slot.time)}
+                                onClick={() => !isDisabled && onSlotSelect(slot.time, slot.value)}
                                 disabled={isDisabled}
                                 className={`py-3 px-4 rounded-xl border text-sm font-semibold transition-all duration-200 relative group
                                     ${isSelected

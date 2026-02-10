@@ -3,6 +3,7 @@ import { Appointment, AppointmentStatus, MedicalReport } from '../../types/appoi
 import { Check, X, Clock, User, FileText, Loader2, IndianRupee, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatBloodType } from '@/src/utils/healthcare';
+import { formatDate, formatTime } from '@/src/utils/date';
 import UserAvatar from '../common/UserAvatar';
 
 interface DoctorAppointmentCardProps {
@@ -48,11 +49,11 @@ export default function DoctorAppointmentCard({ appointment, onStatusUpdate }: D
                         <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
                             <span className="flex items-center gap-1">
                                 <Calendar className="w-3.5 h-3.5" />
-                                {format(startTime, 'eeee, dd MMM')}
+                                {formatDate(startTime)}
                             </span>
                             <span className="flex items-center gap-1">
                                 <Clock className="w-3.5 h-3.5" />
-                                {format(startTime, 'hh:mm a')}
+                                {formatTime(startTime)}
                             </span>
                         </div>
                     </div>

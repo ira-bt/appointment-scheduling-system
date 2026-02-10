@@ -74,7 +74,7 @@ export const ReportUpload: React.FC<ReportUploadProps> = ({ appointmentId, onSuc
 
             <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-indigo-300 hover:bg-slate-50 transition-all group"
+                className="border-2 border-dashed border-slate-200 rounded-xl p-6 sm:p-10 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-indigo-300 hover:bg-slate-50 transition-all group"
             >
                 <input
                     type="file"
@@ -87,29 +87,34 @@ export const ReportUpload: React.FC<ReportUploadProps> = ({ appointmentId, onSuc
                 <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
                     <Upload className="w-6 h-6" />
                 </div>
-                <div className="text-center">
+                <div className="text-center px-4">
                     <p className="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
-                    <p className="text-xs text-slate-400 mt-1">Supported: JPG, PNG, PDF</p>
+                    <p className="text-xs text-slate-400 mt-1">Supported: JPG, PNG, PDF (Max 5MB each)</p>
                 </div>
             </div>
 
             {selectedFiles.length > 0 && (
                 <div className="mt-6 space-y-3">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Selected Files ({selectedFiles.length}/5)</p>
+                    <div className="flex items-center justify-between px-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Selected Files ({selectedFiles.length}/5)</p>
+                        {selectedFiles.length > 0 && (
+                            <button onClick={() => setSelectedFiles([])} className="text-[10px] font-bold text-red-500 hover:underline uppercase tracking-widest">Clear All</button>
+                        )}
+                    </div>
                     {selectedFiles.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100 group animate-in fade-in slide-in-from-top-1">
+                        <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 group animate-in fade-in slide-in-from-top-1">
                             <div className="flex items-center gap-3 overflow-hidden">
-                                <div className="w-8 h-8 rounded bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
+                                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
                                     <FileText className="w-4 h-4 text-slate-400" />
                                 </div>
                                 <div className="min-w-0">
                                     <p className="text-sm font-medium text-slate-700 truncate">{file.name}</p>
-                                    <p className="text-xs text-slate-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                    <p className="text-[10px] text-slate-400 font-medium">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                                 </div>
                             </div>
                             <button
                                 onClick={() => removeFile(index)}
-                                className="p-1 hover:bg-red-50 hover:text-red-600 text-slate-400 transition-colors rounded"
+                                className="p-2 hover:bg-red-50 hover:text-red-600 text-slate-400 transition-colors rounded-lg"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -118,12 +123,12 @@ export const ReportUpload: React.FC<ReportUploadProps> = ({ appointmentId, onSuc
                 </div>
             )}
 
-            <div className="mt-8 flex items-center justify-end gap-3">
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-end gap-3">
                 {onCancel && (
                     <button
                         onClick={onCancel}
                         disabled={isUploading}
-                        className="btn btn-ghost"
+                        className="btn btn-ghost w-full sm:w-auto text-slate-500 font-bold text-xs uppercase tracking-widest"
                     >
                         Skip for now
                     </button>
@@ -131,17 +136,17 @@ export const ReportUpload: React.FC<ReportUploadProps> = ({ appointmentId, onSuc
                 <button
                     onClick={handleUpload}
                     disabled={selectedFiles.length === 0 || isUploading}
-                    className="btn btn-primary gap-2 min-w-[160px]"
+                    className="btn btn-primary gap-2 w-full sm:w-auto min-w-[180px] rounded-xl shadow-lg shadow-indigo-100 border-none h-12"
                 >
                     {isUploading ? (
                         <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            Uploading...
+                            <span className="font-bold">Uploading...</span>
                         </>
                     ) : (
                         <>
                             <CheckCircle2 className="w-4 h-4" />
-                            Upload & Continue
+                            <span className="font-bold uppercase tracking-wide text-xs">Upload & Continue</span>
                         </>
                     )}
                 </button>

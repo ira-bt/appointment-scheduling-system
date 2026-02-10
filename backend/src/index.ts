@@ -74,7 +74,7 @@ app.use((req: Request, res: Response) => {
   } as IApiResponse);
 });
 
-app.listen(PORT, () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 
   // Background Cleanup: Cancel appointments that missed the 20-min initiation window
@@ -156,12 +156,9 @@ app.listen(PORT, () => {
       }
 
       // Background Task: Send reminders 1 hour before appointment
-      // Logic: Find CONFIRMED appointments starting in 55-60 minutes
       const now = new Date();
       const oneHourFromNowStart = new Date(now.getTime() + 55 * 60 * 1000);
       const oneHourFromNowEnd = new Date(now.getTime() + 60 * 60 * 1000);
-
-      console.log(`[Reminders] Checking for appointments starting between ${oneHourFromNowStart.toISOString()} and ${oneHourFromNowEnd.toISOString()}`);
 
       const upcomingAppointments = await prisma.appointment.findMany({
         where: {
@@ -178,26 +175,30 @@ app.listen(PORT, () => {
       });
 
       if (upcomingAppointments.length > 0) {
-        console.log(`[Reminders] Found ${upcomingAppointments.length} upcoming appointments. Sending reminders...`);
         for (const app of upcomingAppointments) {
-          const timeStr = new Date(app.appointmentStart).toLocaleTimeString('en-GB', {
+          // Format time based on UTC to be consistent with slot generation
+          // But actually, we should probably format this to the user's timezone if we had it.
+          // For now, let's keep it consistent with the booking flow (Local IST for display)
+          // Since we don't have user timezone here, we use a generic format or UTC.
+          // Better: Use a relative time or just the time part.
+          const appStart = new Date(app.appointmentStart);
+          const timeStr = appStart.toLocaleTimeString('en-GB', {
             hour: '2-digit',
             minute: '2-digit',
             hour12: true
+            // REMOVED explicit timezone here, will use server's locale (likely UTC in production)
           });
 
           await emailService.sendAppointmentReminder(
             app.patient.user.email,
             app.patient.user.firstName,
-            `${app.doctor.user.firstName} ${app.doctor.user.lastName}`,
+            `Dr. ${app.doctor.user.firstName} ${app.doctor.user.lastName}`,
             timeStr
           ).catch((err: unknown) => console.error(`[Reminders] Reminder email failed for ${app.id}:`, err));
         }
-        console.log(`[Reminders] Successfully processed ${upcomingAppointments.length} reminders.`);
       }
 
       // Background Task: Auto-complete appointments that have ended
-      console.log('[Cleanup] Checking for appointments to auto-complete...');
       const completedThreshold = new Date();
       const pastConfirmed = await prisma.appointment.findMany({
         where: {
@@ -225,16 +226,20 @@ app.listen(PORT, () => {
 
       // Background Task: Clean up old/revoked refresh tokens
       console.log('[Cleanup] Checking for expired/revoked refresh tokens...');
-      const deletedTokens = await prisma.refreshToken.deleteMany({
-        where: {
-          OR: [
-            { expiresAt: { lt: new Date() } }, // Expired
-            { isRevoked: true, createdAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } } // Revoked more than 24h ago
-          ]
+      try {
+        const deletedTokens = await prisma.refreshToken.deleteMany({
+          where: {
+            OR: [
+              { expiresAt: { lt: new Date() } }, // Expired
+              { isRevoked: true, createdAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } } // Revoked more than 24h ago
+            ]
+          }
+        });
+        if (deletedTokens.count > 0) {
+          console.log(`[Cleanup] Deleted ${deletedTokens.count} old refresh tokens.`);
         }
-      });
-      if (deletedTokens.count > 0) {
-        console.log(`[Cleanup] Deleted ${deletedTokens.count} old refresh tokens.`);
+      } catch (err) {
+        console.error('[Cleanup] Refresh token cleanup failed:', err);
       }
 
     } catch (error) {
