@@ -74,6 +74,7 @@ export const patientAppointmentQuerySchema = z.object({
 // Validation schema for doctor appointments query
 export const doctorAppointmentQuerySchema = z.object({
     status: z.nativeEnum(AppointmentStatus).optional(),
+    type: z.enum(['upcoming', 'past', 'requests', 'approved']).optional(),
     page: z.coerce.number().min(1).default(1),
     limit: z.coerce.number().min(1).max(100).default(10),
     sortBy: z.enum(['appointmentStart', 'status']).default('appointmentStart'),
@@ -490,15 +491,30 @@ export class AppointmentController {
     static async getDoctorAppointments(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const doctorId = req.user.id;
-            const { status, page, limit, sortBy, sortOrder } = doctorAppointmentQuerySchema.parse(req.query);
+            const { status, type, page, limit, sortBy, sortOrder } = doctorAppointmentQuerySchema.parse(req.query);
 
             const skip = (page - 1) * limit;
+            const now = new Date();
 
             const where: Prisma.AppointmentWhereInput = {
                 doctorId,
             };
 
-            if (status) {
+            if (type) {
+                if (type === 'upcoming') {
+                    where.status = AppointmentStatus.CONFIRMED;
+                    where.appointmentStart = { gte: now };
+                } else if (type === 'past') {
+                    where.OR = [
+                        { appointmentStart: { lt: now } },
+                        { status: { in: [AppointmentStatus.COMPLETED, AppointmentStatus.REJECTED, AppointmentStatus.CANCELLED] } }
+                    ];
+                } else if (type === 'requests') {
+                    where.status = AppointmentStatus.PENDING;
+                } else if (type === 'approved') {
+                    where.status = AppointmentStatus.APPROVED;
+                }
+            } else if (status) {
                 where.status = status;
             }
 
@@ -649,6 +665,87 @@ export class AppointmentController {
             } as IApiResponse);
 
         } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Check if a patient has a conflicting appointment (Patient only)
+     */
+    static async checkPatientConflict(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const patientId = req.user.id;
+            const { appointmentStart } = createAppointmentSchema.pick({ appointmentStart: true }).parse(req.query);
+
+            const requestedStart = new Date(appointmentStart);
+            const requestedEnd = new Date(requestedStart);
+            requestedEnd.setMinutes(requestedStart.getMinutes() + 30); // 30 min duration
+
+            // Find any existing appointment for this patient that overlaps
+            const conflict = await prisma.appointment.findFirst({
+                where: {
+                    patientId,
+                    status: {
+                        in: [AppointmentStatus.PENDING, AppointmentStatus.APPROVED, AppointmentStatus.CONFIRMED]
+                    },
+                    AND: [
+                        { appointmentStart: { lt: requestedEnd } },
+                        {
+                            appointmentStart: {
+                                gt: new Date(requestedStart.getTime() - 30 * 60 * 1000)
+                            }
+                        }
+                    ]
+                },
+                include: {
+                    doctor: {
+                        include: {
+                            user: {
+                                select: {
+                                    firstName: true,
+                                    lastName: true
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (conflict) {
+                const conflictStart = new Date(conflict.appointmentStart);
+                const timeStr = conflictStart.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                const dateStr = conflictStart.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+
+                res.status(200).json({
+                    success: true,
+                    data: {
+                        hasConflict: true,
+                        conflict: {
+                            status: conflict.status,
+                            time: timeStr,
+                            date: dateStr,
+                            doctorName: `Dr. ${conflict.doctor.user.firstName} ${conflict.doctor.user.lastName}`
+                        }
+                    },
+                    statusCode: 200,
+                } as IApiResponse);
+            } else {
+                res.status(200).json({
+                    success: true,
+                    data: { hasConflict: false },
+                    statusCode: 200,
+                } as IApiResponse);
+            }
+
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Invalid date provided',
+                    statusCode: 400,
+                } as IApiResponse);
+                return;
+            }
             next(error);
         }
     }

@@ -11,7 +11,7 @@ import SlotPicker from '@/src/components/booking/SlotPicker';
 import { appointmentService } from '@/src/services/appointment.service';
 import { getErrorMessage } from '@/src/utils/api-error';
 import { ReportUpload } from '@/src/components/booking/ReportUpload';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, ArrowLeft } from 'lucide-react';
 
 function BookingPageContent() {
     const searchParams = useSearchParams();
@@ -25,6 +25,9 @@ function BookingPageContent() {
     const [bookingLoading, setBookingLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [bookedAppointmentId, setBookedAppointmentId] = useState<string | null>(null);
+
+    const [conflictInfo, setConflictInfo] = useState<{ hasConflict: boolean; conflict?: { status: string; time: string; date: string; doctorName: string } } | null>(null);
+    const [showConflictConfirm, setShowConflictConfirm] = useState(false);
 
     useEffect(() => {
         if (!doctorId) {
@@ -46,12 +49,33 @@ function BookingPageContent() {
         fetchDoctor();
     }, [doctorId, router]);
 
-    const handleBooking = async () => {
+    useEffect(() => {
+        const checkConflict = async () => {
+            if (!selectedDate || !selectedSlot) {
+                setConflictInfo(null);
+                return;
+            }
+
+            try {
+                const [hours, minutes] = selectedSlot.split(':');
+                const appointmentDate = new Date(selectedDate);
+                appointmentDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+                const response = await appointmentService.checkConflict(appointmentDate.toISOString());
+                setConflictInfo(response.data);
+            } catch (err) {
+                console.error('Conflict check failed:', err);
+            }
+        };
+
+        checkConflict();
+    }, [selectedDate, selectedSlot]);
+
+    const performBooking = async () => {
         if (!doctorId || !selectedDate || !selectedSlot) return;
 
         setBookingLoading(true);
         try {
-            // Combine date and slot time
             const [hours, minutes] = selectedSlot.split(':');
             const appointmentDate = new Date(selectedDate);
             appointmentDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
@@ -66,6 +90,15 @@ function BookingPageContent() {
             alert(getErrorMessage(err));
         } finally {
             setBookingLoading(false);
+            setShowConflictConfirm(false);
+        }
+    };
+
+    const handleBooking = async () => {
+        if (conflictInfo?.hasConflict) {
+            setShowConflictConfirm(true);
+        } else {
+            await performBooking();
         }
     };
 
@@ -124,6 +157,17 @@ function BookingPageContent() {
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto">
+                {/* Back Button */}
+                <button
+                    onClick={() => router.back()}
+                    className="mb-8 flex items-center gap-2 text-slate-500 hover:text-blue-600 transition-colors group font-medium"
+                >
+                    <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center group-hover:bg-blue-50 group-hover:border-blue-100 shadow-sm transition-all">
+                        <ArrowLeft className="w-4 h-4" />
+                    </div>
+                    <span>Back to Search</span>
+                </button>
+
                 {/* Header */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 flex items-center gap-6">
                     <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shrink-0">
@@ -190,6 +234,25 @@ function BookingPageContent() {
                                     </p>
                                 </div>
                             </div>
+
+                            {/* Conflict Warning */}
+                            {conflictInfo?.hasConflict && (
+                                <div className="flex-1 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 animate-in fade-in zoom-in duration-300">
+                                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-amber-600">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p className="text-amber-800 text-sm font-bold">Heads up! You have a conflict</p>
+                                        <p className="text-amber-700 text-xs mt-0.5">
+                                            You already have a <span className="font-bold underline uppercase">{conflictInfo.conflict?.status}</span> appointment
+                                            with <span className="font-bold">{conflictInfo.conflict?.doctorName}</span> on this day at <span className="font-bold">{conflictInfo.conflict?.time}</span>.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             <button
                                 onClick={handleBooking}
                                 disabled={bookingLoading}
@@ -206,6 +269,58 @@ function BookingPageContent() {
                     </div>
                 )}
             </div>
+
+            {/* Conflict Confirmation Modal */}
+            {showConflictConfirm && conflictInfo?.hasConflict && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in slide-in-from-bottom-8 duration-500">
+                        <div className="bg-amber-500 p-6 flex flex-col items-center text-white text-center">
+                            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-8 h-8">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-xl font-bold">Appointment Conflict</h3>
+                            <p className="text-amber-50/90 text-sm mt-1">You already have an appointment at this time.</p>
+                        </div>
+
+                        <div className="p-8">
+                            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-6">
+                                <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Existing Appointment</p>
+                                <div className="space-y-1">
+                                    <p className="text-slate-800 font-bold">Dr. {conflictInfo.conflict?.doctorName}</p>
+                                    <p className="text-slate-600 text-sm">{conflictInfo.conflict?.date} at {conflictInfo.conflict?.time}</p>
+                                    <p className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 uppercase">
+                                        {conflictInfo.conflict?.status}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <p className="text-slate-600 text-sm text-center mb-8">
+                                Would you like to select a different time slot or proceed with this booking anyway?
+                            </p>
+
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={() => setShowConflictConfirm(false)}
+                                    className="btn btn-primary rounded-2xl py-4 h-auto"
+                                >
+                                    Choose Another Slot
+                                </button>
+                                <button
+                                    onClick={performBooking}
+                                    disabled={bookingLoading}
+                                    className="btn btn-ghost text-slate-500 hover:text-slate-800 rounded-2xl"
+                                >
+                                    {bookingLoading ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : 'Proceed Anyway'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

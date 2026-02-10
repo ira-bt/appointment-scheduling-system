@@ -8,6 +8,7 @@ export interface AnalyticsSummary {
     totalRevenue: number;
     totalPatients: number;
     averageRating: number;
+    todayAppointments?: number;
 }
 
 export interface DailyMetric {
