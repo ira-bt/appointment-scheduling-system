@@ -9,7 +9,9 @@ export const APP_ROUTES = {
   DASHBOARD: {
     BASE: '/dashboard',
     PATIENT: '/dashboard/patient',
+    PATIENT_PROFILE: '/dashboard/patient/profile',
     DOCTOR: '/dashboard/doctor',
+    DOCTOR_PROFILE: '/dashboard/doctor/profile',
   },
   DOCTORS: '/doctors',
   APPOINTMENTS: {

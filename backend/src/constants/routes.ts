@@ -13,6 +13,8 @@ export const ROUTES = {
   USERS: {
     BASE: '/users',
     ME: '/me',
+    UPDATE_PROFILE: '/update',
+    UPLOAD_PROFILE_IMAGE: '/profile-image',
   },
   DOCTORS: {
     BASE: '/doctors',

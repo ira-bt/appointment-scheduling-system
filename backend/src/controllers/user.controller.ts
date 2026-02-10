@@ -92,8 +92,23 @@ export class UserController {
           });
         }
 
-        return user;
+        return await tx.user.findUnique({
+          where: { id: user.id },
+          include: {
+            patientProfile: true,
+            doctorProfile: true,
+          }
+        });
       });
+
+      if (!result) {
+        res.status(500).json({
+          success: false,
+          message: 'User registration failed - profile not found',
+          statusCode: 500,
+        } as IApiResponse);
+        return;
+      }
 
       // Send welcome email (asynchronous, don't block response)
       emailService.sendWelcomeEmail(result.email, result.firstName).catch(err => {
@@ -131,6 +146,8 @@ export class UserController {
           role: result.role,
           city: result.city || undefined,
           profileImage: result.profileImage || undefined,
+          patientProfile: result.patientProfile || undefined,
+          doctorProfile: result.doctorProfile || undefined,
           createdAt: result.createdAt,
           updatedAt: result.updatedAt,
         },
@@ -158,6 +175,10 @@ export class UserController {
       // Find user by email
       const user = await prisma.user.findUnique({
         where: { email },
+        include: {
+          patientProfile: true,
+          doctorProfile: true,
+        },
       });
 
       if (!user) {
@@ -223,6 +244,8 @@ export class UserController {
           role: user.role,
           city: user.city || undefined,
           profileImage: user.profileImage || undefined,
+          patientProfile: user.patientProfile || undefined,
+          doctorProfile: user.doctorProfile || undefined,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         },
@@ -516,6 +539,139 @@ export class UserController {
       res.status(200).json({
         success: true,
         message: 'User profile fetched successfully',
+        data: userWithoutPassword,
+        statusCode: 200,
+      } as IApiResponse);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Update user profile
+   * Authenticated user updates their own profile
+   */
+  static async updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user.id;
+      const role = req.user.role;
+      const updateData = req.body;
+
+      await prisma.$transaction(async (tx) => {
+        // 1. Update basic User info
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            firstName: updateData.firstName || undefined,
+            lastName: updateData.lastName || undefined,
+            phoneNumber: updateData.phoneNumber || undefined,
+            city: updateData.city || undefined,
+          },
+        });
+
+        // 2. Update role-specific profile
+        if (role === Role.PATIENT) {
+          await tx.patientProfile.upsert({
+            where: { userId },
+            create: {
+              userId,
+              bloodType: updateData.bloodType || undefined,
+              allergies: updateData.allergies || undefined,
+              medicalHistory: updateData.medicalHistory || undefined,
+              emergencyContactName: updateData.emergencyContactName || undefined,
+              emergencyContactPhone: updateData.emergencyContactPhone || undefined,
+            },
+            update: {
+              bloodType: updateData.bloodType || undefined,
+              allergies: updateData.allergies || undefined,
+              medicalHistory: updateData.medicalHistory || undefined,
+              emergencyContactName: updateData.emergencyContactName || undefined,
+              emergencyContactPhone: updateData.emergencyContactPhone || undefined,
+            },
+          });
+        } else if (role === Role.DOCTOR) {
+          await tx.doctorProfile.upsert({
+            where: { userId },
+            create: {
+              userId,
+              bio: updateData.bio || undefined,
+              specialty: updateData.specialty || undefined,
+              experience: updateData.experience || undefined,
+              qualification: updateData.qualification || undefined,
+              consultationFee: updateData.consultationFee || undefined,
+            },
+            update: {
+              bio: updateData.bio || undefined,
+              specialty: updateData.specialty || undefined,
+              experience: updateData.experience || undefined,
+              qualification: updateData.qualification || undefined,
+              consultationFee: updateData.consultationFee || undefined,
+            },
+          });
+        }
+      });
+
+      // Fetch the full updated profile to return
+      const updatedUser = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          patientProfile: true,
+          doctorProfile: true,
+        },
+      });
+
+      if (!updatedUser) {
+        throw new Error('User not found after update');
+      }
+
+      const { password, ...userWithoutPassword } = updatedUser;
+
+      res.status(200).json({
+        success: true,
+        message: 'Profile updated successfully',
+        data: userWithoutPassword,
+        statusCode: 200,
+      } as IApiResponse);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Upload profile image
+   * Handled by profileUpload middleware which uploads to Cloudinary
+   */
+  static async uploadProfileImage(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user.id;
+
+      if (!req.file) {
+        res.status(400).json({
+          success: false,
+          message: 'No image file uploaded',
+          statusCode: 400,
+        } as IApiResponse);
+        return;
+      }
+
+      // The file path is provided by Cloudinary via multer-storage-cloudinary
+      const imageUrl = (req.file as any).path;
+
+      // Update user in database
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: { profileImage: imageUrl },
+        include: {
+          patientProfile: true,
+          doctorProfile: true,
+        },
+      });
+
+      const { password, ...userWithoutPassword } = updatedUser;
+
+      res.status(200).json({
+        success: true,
+        message: 'Profile image updated successfully',
         data: userWithoutPassword,
         statusCode: 200,
       } as IApiResponse);

@@ -11,6 +11,7 @@ import { Appointment } from '@/src/types/appointment.types';
 import AppointmentCard from '@/src/components/appointments/AppointmentCard';
 import Pagination from '@/src/components/common/Pagination';
 import SortDropdown from '@/src/components/common/SortDropdown';
+import UserAvatar from '@/src/components/common/UserAvatar';
 import { Calendar, Clock, CheckCircle, ArrowRight } from 'lucide-react';
 
 export default function PatientDashboard() {
@@ -81,14 +82,16 @@ export default function PatientDashboard() {
                     <div className="flex-none gap-2">
                         <div className="dropdown dropdown-end">
                             <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
-                                <div className="w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
-                                    {user?.firstName?.charAt(0)}
-                                </div>
+                                <UserAvatar
+                                    src={user?.profileImage}
+                                    firstName={user?.firstName}
+                                    className="bg-blue-100 text-blue-600"
+                                />
                             </label>
                             <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
-                                <li><a className="justify-between">Profile</a></li>
+                                <li><Link href={APP_ROUTES.DASHBOARD.PATIENT_PROFILE} className="justify-between">Profile</Link></li>
                                 <li><a>Settings</a></li>
-                                <li><button onClick={logout} className="text-red-600">Logout</button></li>
+                                <li><button onClick={logout} className="text-red-600 font-bold">Logout</button></li>
                             </ul>
                         </div>
                     </div>

@@ -89,6 +89,25 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+export interface UpdateProfileRequest {
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  city?: string;
+  // Patient-specific
+  bloodType?: string;
+  allergies?: string;
+  medicalHistory?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  // Doctor-specific
+  bio?: string;
+  specialty?: string;
+  experience?: number;
+  qualification?: string;
+  consultationFee?: number;
+}
+
 export interface TokenPayload {
   userId: string;
   email: string;

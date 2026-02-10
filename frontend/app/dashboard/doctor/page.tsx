@@ -12,11 +12,14 @@ import DoctorAppointmentCard from '@/src/components/doctor/DoctorAppointmentCard
 import { toast } from 'react-hot-toast';
 import { getErrorMessage } from '@/src/utils/api-error';
 import { formatBloodType } from '@/src/utils/healthcare';
-import { Loader2, Users, CalendarDays, Clock, IndianRupee, CreditCard, BarChart3, ChevronDown } from 'lucide-react';
+import { Loader2, Users, CalendarDays, Clock, IndianRupee, CreditCard, BarChart3, ChevronDown, User, LogOut } from 'lucide-react';
+import Link from 'next/link';
+import { APP_ROUTES } from '@/src/constants/app-routes';
 import AnalyticsTab from '@/src/components/analytics/AnalyticsTab';
 import Pagination from '@/src/components/common/Pagination';
 import SortDropdown from '@/src/components/common/SortDropdown';
 import FilterBar from '@/src/components/common/FilterBar';
+import UserAvatar from '@/src/components/common/UserAvatar';
 
 export default function DoctorDashboard() {
     const { user, logout } = useAuth();
@@ -24,7 +27,8 @@ export default function DoctorDashboard() {
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<DashboardTab>(DashboardTab.ANALYTICS);
-    const [actionLoading, setActionLoading] = useState(false);
+    const [processingAction, setProcessingAction] = useState<{ id: string, status: AppointmentStatus } | null>(null);
+    const [pendingCount, setPendingCount] = useState(0);
 
     // Pagination state
     const [page, setPage] = useState(1);
@@ -41,9 +45,22 @@ export default function DoctorDashboard() {
         { label: 'Status', value: 'status-asc' },
     ];
 
-    const fetchAppointments = useCallback(async () => {
+    const fetchStats = useCallback(async () => {
         try {
-            setLoading(true);
+            const response = await doctorService.getAppointments({
+                status: AppointmentStatus.PENDING,
+                page: 1,
+                limit: 1
+            });
+            setPendingCount(response.data.pagination.total);
+        } catch (error) {
+            console.error('Failed to fetch stats:', error);
+        }
+    }, []);
+
+    const fetchAppointments = useCallback(async (isSilent = false) => {
+        try {
+            if (!isSilent) setLoading(true);
             let statusFilter: AppointmentStatus | undefined;
             if (activeTab === DashboardTab.REQUESTS) statusFilter = AppointmentStatus.PENDING;
             if (activeTab === DashboardTab.APPROVED) statusFilter = AppointmentStatus.APPROVED;
@@ -59,18 +76,24 @@ export default function DoctorDashboard() {
             setAppointments(response.data.appointments);
             setTotalPages(response.data.pagination.totalPages);
             setTotalAppointments(response.data.pagination.total);
+
+            // If we're on the requests tab, update the pending count too
+            if (activeTab === DashboardTab.REQUESTS) {
+                setPendingCount(response.data.pagination.total);
+            }
         } catch (error) {
             toast.error(getErrorMessage(error));
         } finally {
-            setLoading(false);
+            if (!isSilent) setLoading(false);
         }
     }, [activeTab, page, sortBy, sortOrder]);
 
     useEffect(() => {
         if (user) {
             fetchAppointments();
+            fetchStats();
         }
-    }, [user, fetchAppointments]);
+    }, [user, fetchAppointments, fetchStats]);
 
     const handleTabChange = useCallback((tab: DashboardTab) => {
         setActiveTab(tab);
@@ -93,26 +116,29 @@ export default function DoctorDashboard() {
 
     const handleStatusUpdate = async (id: string, status: AppointmentStatus.APPROVED | AppointmentStatus.REJECTED) => {
         try {
-            setActionLoading(true);
+            setProcessingAction({ id, status });
             await doctorService.updateAppointmentStatus(id, status);
             toast.success(`Appointment ${status.toLowerCase()} successfully`);
-            fetchAppointments();
+            await Promise.all([
+                fetchAppointments(true),
+                fetchStats()
+            ]);
         } catch (error) {
             toast.error(getErrorMessage(error));
         } finally {
-            setActionLoading(false);
+            setProcessingAction(null);
         }
     };
 
     // Simple stats display
     const stats = useMemo(() => {
         return {
-            pending: activeTab === DashboardTab.REQUESTS ? totalAppointments : 0,
+            pending: pendingCount,
             totalPatients: 0,
             todayCount: 0,
             earnings: 0
         };
-    }, [activeTab, totalAppointments]);
+    }, [pendingCount]);
 
     const displayAppointments = useMemo(() => {
         if (activeTab === DashboardTab.HISTORY) {
@@ -159,7 +185,7 @@ export default function DoctorDashboard() {
                                 </div>
                                 {stats.pending > 0 && (
                                     <span className={`px-2 py-0.5 rounded-full text-[10px] ${activeTab === DashboardTab.REQUESTS ? 'bg-white text-blue-600' : 'bg-orange-500 text-white'}`}>
-                                        {totalAppointments}
+                                        {stats.pending}
                                     </span>
                                 )}
                             </button>
@@ -197,11 +223,23 @@ export default function DoctorDashboard() {
                                 <Clock className="w-5 h-5 text-blue-500" />
                                 Availability
                             </button>
+                            <div className="pt-4 pb-2 border-t border-gray-50">
+                                <p className="px-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Account</p>
+                            </div>
+
+                            <Link
+                                href={APP_ROUTES.DASHBOARD.DOCTOR_PROFILE}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-gray-500 hover:bg-gray-50"
+                            >
+                                <User className="w-5 h-5" />
+                                Profile
+                            </Link>
+
                             <button
                                 onClick={logout}
-                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-red-500 hover:bg-red-50 transition-all"
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-red-500 hover:bg-red-50 mt-auto"
                             >
-                                <Clock className="w-5 h-5" />
+                                <LogOut className="w-5 h-5" />
                                 Logout
                             </button>
                         </div>
@@ -221,9 +259,12 @@ export default function DoctorDashboard() {
                                     <p className="text-sm font-black text-gray-900">Dr. {user?.firstName} {user?.lastName}</p>
                                     <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Medical Professional</p>
                                 </div>
-                                <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black shadow-lg shadow-blue-100">
-                                    {user?.firstName?.charAt(0)}
-                                </div>
+                                <UserAvatar
+                                    src={user?.profileImage}
+                                    firstName={user?.firstName}
+                                    variant="square"
+                                    className="bg-blue-600 text-white shadow-lg shadow-blue-100 font-black"
+                                />
                             </div>
                         </header>
 
@@ -300,7 +341,6 @@ export default function DoctorDashboard() {
                                                 key={appointment.id}
                                                 appointment={appointment}
                                                 onStatusUpdate={handleStatusUpdate}
-                                                loading={actionLoading}
                                             />
                                         ))}
 

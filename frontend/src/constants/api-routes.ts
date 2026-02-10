@@ -8,9 +8,12 @@ export const API = {
     REFRESH: `${API_BASE}/auth/refresh`,
     FORGOT_PASSWORD: `${API_BASE}/auth/forgot-password`,
     RESET_PASSWORD: `${API_BASE}/auth/reset-password`,
+    CHANGE_PASSWORD: `${API_BASE}/auth/change-password`,
   },
   USERS: {
     ME: `${API_BASE}/users/me`,
+    UPDATE_PROFILE: `${API_BASE}/users/update`,
+    UPLOAD_PROFILE_IMAGE: `${API_BASE}/users/profile-image`,
   },
   DOCTORS: {
     BASE: `${API_BASE}/doctors`,

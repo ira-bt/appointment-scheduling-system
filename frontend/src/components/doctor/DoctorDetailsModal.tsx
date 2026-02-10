@@ -3,6 +3,7 @@
 import { User, DoctorProfile } from '@/src/types/user.types';
 import Link from 'next/link';
 import { Star } from 'lucide-react';
+import UserAvatar from '../common/UserAvatar';
 
 interface DoctorDetailsModalProps {
     doctor: (User & { doctorProfile: DoctorProfile }) | null;
@@ -27,11 +28,13 @@ export default function DoctorDetailsModal({ doctor, onClose }: DoctorDetailsMod
                         ✕
                     </button>
                     <div className="flex items-center space-x-6">
-                        <div className="avatar">
-                            <div className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-bold text-3xl border border-white/30">
-                                {firstName[0]}{lastName[0]}
-                            </div>
-                        </div>
+                        <UserAvatar
+                            src={doctor.profileImage}
+                            firstName={doctor.firstName}
+                            size="xl"
+                            variant="square"
+                            className="bg-white/20 backdrop-blur-md text-white border border-white/30"
+                        />
                         <div>
                             <h2 className="text-3xl font-bold">Dr. {firstName} {lastName}</h2>
                             <p className="text-blue-100 text-lg mt-1">{specialty || 'General Practitioner'}</p>
