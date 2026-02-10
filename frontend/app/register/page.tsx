@@ -95,55 +95,58 @@ export default function RegisterPage() {
     }));
 
     // Validate the field and update errors
-    const error = validateField(name, fieldValue);
+    const fieldError = validateField(name, fieldValue);
     setErrors(prev => ({
       ...prev,
-      [name]: error
+      [name]: fieldError
     }));
 
-    // Check if form is valid after each change
-    setTimeout(() => {
-      validateForm();
-    }, 0);
+    const newData = {
+      ...formData,
+      [name]: fieldValue
+    };
+
+    // Check if form is valid after each change using latest data
+    validateForm(newData);
   };
 
-  const validateForm = () => {
+  const validateForm = (data = formData) => {
     const newErrors: Record<string, string> = {};
 
     // Basic required fields
-    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-    else if (!REGEX.NAME.test(formData.firstName)) newErrors.firstName = 'First name must contain only letters and be at least 2 characters';
+    if (!data.firstName.trim()) newErrors.firstName = 'First name is required';
+    else if (!REGEX.NAME.test(data.firstName)) newErrors.firstName = 'First name must contain only letters and be at least 2 characters';
 
-    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    else if (!REGEX.NAME.test(formData.lastName)) newErrors.lastName = 'Last name must contain only letters and be at least 2 characters';
+    if (!data.lastName.trim()) newErrors.lastName = 'Last name is required';
+    else if (!REGEX.NAME.test(data.lastName)) newErrors.lastName = 'Last name must contain only letters and be at least 2 characters';
 
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!REGEX.EMAIL.test(formData.email)) newErrors.email = 'Email is invalid';
+    if (!data.email.trim()) newErrors.email = 'Email is required';
+    else if (!REGEX.EMAIL.test(data.email)) newErrors.email = 'Email is invalid';
 
-    if (!formData.password) newErrors.password = 'Password is required';
-    // else if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
-    else if (!REGEX.PASSWORD.test(formData.password))
+    if (!data.password) newErrors.password = 'Password is required';
+    // else if (data.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
+    else if (!REGEX.PASSWORD.test(data.password))
       newErrors.password = 'Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character, min length 8';
 
-    if (!formData.city) newErrors.city = 'City is required';
+    if (!data.city) newErrors.city = 'City is required';
 
     // Phone number validation
-    if (formData.phoneNumber && !REGEX.PHONE.test(formData.phoneNumber)) {
+    if (data.phoneNumber && !REGEX.PHONE.test(data.phoneNumber)) {
       newErrors.phoneNumber = 'Phone number must be 10 digits';
     }
 
     // Role-specific validations
-    if (formData.role === UserRole.PATIENT) {
-      if (!formData.bloodType) newErrors.bloodType = 'Blood type is required';
-      if (formData.emergencyContactPhone && !REGEX.PHONE.test(formData.emergencyContactPhone)) {
+    if (data.role === UserRole.PATIENT) {
+      if (!data.bloodType) newErrors.bloodType = 'Blood type is required';
+      if (data.emergencyContactPhone && !REGEX.PHONE.test(data.emergencyContactPhone)) {
         newErrors.emergencyContactPhone = 'Emergency contact phone must be 10 digits';
       }
     }
 
-    if (formData.role === UserRole.DOCTOR) {
-      if (!formData.specialty) newErrors.specialty = 'Specialty is required';
-      if (formData.experience < 0) newErrors.experience = 'Experience cannot be negative';
-      if (formData.consultationFee < 0) newErrors.consultationFee = 'Consultation fee cannot be negative';
+    if (data.role === UserRole.DOCTOR) {
+      if (!data.specialty) newErrors.specialty = 'Specialty is required';
+      if (data.experience < 0) newErrors.experience = 'Experience cannot be negative';
+      if (data.consultationFee < 0) newErrors.consultationFee = 'Consultation fee cannot be negative';
     }
 
     setErrors(newErrors);

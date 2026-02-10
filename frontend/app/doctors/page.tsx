@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { doctorService, DoctorQueryParams } from '@/src/services/doctor.service';
 import { CITIES, SPECIALTIES } from '@/src/constants/healthcare.constants';
 import DoctorCard from '@/src/components/doctor/DoctorCard';
@@ -24,20 +24,22 @@ export default function DoctorDiscoveryPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [showMobileFilters, setShowMobileFilters] = useState(false);
-    const [filters, setFilters] = useState<DoctorQueryParams>({
+    const [filters, setFilters] = useState<DoctorQueryParams>(() => ({
         page: 1,
         limit: 4,
         specialty: '',
-        city: '',
+        city: useAuthStore.getState().user?.city || '',
         search: '',
         sortBy: 'firstName',
         sortOrder: 'asc'
-    });
+    }));
 
     const [pagination, setPagination] = useState({
         total: 0,
         totalPages: 0,
     });
+    const initialCity = useAuthStore.getState().user?.city;
+    const hasInitializedCity = useRef(!!initialCity);
 
     const filterGroups = [
         {
@@ -112,10 +114,11 @@ export default function DoctorDiscoveryPage() {
         fetchDoctors();
     }, [fetchDoctors]);
 
-    // Set initial city from user profile
+    // Set initial city from user profile ONLY ONCE
     useEffect(() => {
-        if (user?.city && !filters.city) {
+        if (user?.city && filters.city === '' && !hasInitializedCity.current) {
             setFilters(prev => ({ ...prev, city: user.city }));
+            hasInitializedCity.current = true;
         }
     }, [user, filters.city]);
 

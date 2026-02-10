@@ -13,13 +13,13 @@ export default function HomePage() {
       {/* Navigation */}
       <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <Link href={APP_ROUTES.HOME} className="flex items-center space-x-2">
-            <div className="bg-primary p-2 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <Link href={APP_ROUTES.HOME} className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+            <div className="bg-primary p-1.5 sm:p-2 rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <span className="text-xl font-bold text-primary">MediScheduler</span>
+            <span className="hidden min-[380px]:inline text-lg sm:text-xl font-bold text-primary tracking-tight">MediScheduler</span>
           </Link>
 
           <nav>
@@ -34,11 +34,11 @@ export default function HomePage() {
                 </Link>
               </div>
             ) : (
-              <div className="flex space-x-2">
-                <Link href={APP_ROUTES.AUTH.LOGIN} className="btn btn-ghost text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-lg">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <Link href={APP_ROUTES.AUTH.LOGIN} className="btn btn-ghost btn-xs sm:btn-md text-gray-700 hover:bg-gray-100 px-2 sm:px-4 rounded-lg text-xs sm:text-base h-9 sm:h-12 min-h-0">
                   Login
                 </Link>
-                <Link href={APP_ROUTES.AUTH.REGISTER} className="btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                <Link href={APP_ROUTES.AUTH.REGISTER} className="btn bg-blue-600 hover:bg-blue-700 text-white btn-xs sm:btn-md px-2.5 sm:px-4 rounded-lg text-xs sm:text-base h-9 sm:h-12 min-h-0">
                   Sign Up
                 </Link>
               </div>
@@ -60,11 +60,11 @@ export default function HomePage() {
             </p>
 
             {!isAuthenticated && (
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href={APP_ROUTES.AUTH.REGISTER} className="btn bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-medium">
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <Link href={APP_ROUTES.AUTH.REGISTER} className="btn bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl text-lg font-bold shadow-lg shadow-blue-100 w-full sm:w-auto">
                   Get Started
                 </Link>
-                <Link href={APP_ROUTES.AUTH.LOGIN} className="btn border border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 rounded-lg text-lg font-medium">
+                <Link href={APP_ROUTES.AUTH.LOGIN} className="btn border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3.5 rounded-xl text-lg font-bold w-full sm:w-auto">
                   Sign In
                 </Link>
               </div>
@@ -98,14 +98,14 @@ export default function HomePage() {
                   <p className="text-sm text-gray-600">Book appointments in seconds</p>
                 </div>
               </div>
-              <div className="absolute -top-6 -right-4 sm:-right-8 bg-green-500 text-white rounded-2xl p-3 sm:p-4 shadow-xl animate-bounce-slow">
+              <div className="absolute -top-6 -right-2 sm:-right-8 bg-green-500 text-white rounded-2xl p-2.5 sm:p-4 shadow-xl animate-bounce-slow border-2 border-white">
                 <div className="flex items-center">
                   <div className="bg-white/20 p-1 rounded-full mr-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <span className="text-xs sm:text-sm font-bold">Trusted by 10k+ users</span>
+                  <span className="text-[10px] sm:text-sm font-black uppercase tracking-wider">10k+ users</span>
                 </div>
               </div>
             </div>
