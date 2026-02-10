@@ -20,6 +20,7 @@ import Pagination from '@/src/components/common/Pagination';
 import SortDropdown from '@/src/components/common/SortDropdown';
 import FilterBar from '@/src/components/common/FilterBar';
 import UserAvatar from '@/src/components/common/UserAvatar';
+import { analyticsService, AnalyticsSummary } from '@/src/services/analytics.service';
 
 export default function DoctorDashboard() {
     const { user, logout } = useAuth();
@@ -29,6 +30,7 @@ export default function DoctorDashboard() {
     const [activeTab, setActiveTab] = useState<DashboardTab>(DashboardTab.ANALYTICS);
     const [processingAction, setProcessingAction] = useState<{ id: string, status: AppointmentStatus } | null>(null);
     const [pendingCount, setPendingCount] = useState(0);
+    const [overallStats, setOverallStats] = useState<AnalyticsSummary | null>(null);
 
     // Pagination state
     const [page, setPage] = useState(1);
@@ -58,16 +60,28 @@ export default function DoctorDashboard() {
         }
     }, []);
 
+    const fetchOverallStats = useCallback(async () => {
+        try {
+            const response = await analyticsService.getDoctorAnalytics(); // No dates = Overall
+            if (response.success) {
+                setOverallStats(response.data.summary);
+            }
+        } catch (error) {
+            console.error('Failed to fetch overall stats:', error);
+        }
+    }, []);
+
     const fetchAppointments = useCallback(async (isSilent = false) => {
         try {
             if (!isSilent) setLoading(true);
-            let statusFilter: AppointmentStatus | undefined;
-            if (activeTab === DashboardTab.REQUESTS) statusFilter = AppointmentStatus.PENDING;
-            if (activeTab === DashboardTab.APPROVED) statusFilter = AppointmentStatus.APPROVED;
-            if (activeTab === DashboardTab.SCHEDULED) statusFilter = AppointmentStatus.CONFIRMED;
+            let typeFilter: 'upcoming' | 'past' | 'requests' | 'approved' | undefined;
+            if (activeTab === DashboardTab.REQUESTS) typeFilter = 'requests';
+            if (activeTab === DashboardTab.APPROVED) typeFilter = 'approved';
+            if (activeTab === DashboardTab.SCHEDULED) typeFilter = 'upcoming';
+            if (activeTab === DashboardTab.HISTORY) typeFilter = 'past';
 
             const response = await doctorService.getAppointments({
-                status: statusFilter,
+                type: typeFilter,
                 page,
                 limit: 10,
                 sortBy,
@@ -92,8 +106,9 @@ export default function DoctorDashboard() {
         if (user) {
             fetchAppointments();
             fetchStats();
+            fetchOverallStats();
         }
-    }, [user, fetchAppointments, fetchStats]);
+    }, [user, fetchAppointments, fetchStats, fetchOverallStats]);
 
     const handleTabChange = useCallback((tab: DashboardTab) => {
         setActiveTab(tab);
@@ -121,7 +136,8 @@ export default function DoctorDashboard() {
             toast.success(`Appointment ${status.toLowerCase()} successfully`);
             await Promise.all([
                 fetchAppointments(true),
-                fetchStats()
+                fetchStats(),
+                fetchOverallStats()
             ]);
         } catch (error) {
             toast.error(getErrorMessage(error));
@@ -134,22 +150,15 @@ export default function DoctorDashboard() {
     const stats = useMemo(() => {
         return {
             pending: pendingCount,
-            totalPatients: 0,
-            todayCount: 0,
-            earnings: 0
+            totalPatients: overallStats?.totalPatients || 0,
+            todayCount: overallStats?.todayAppointments || 0,
+            earnings: overallStats?.totalRevenue || 0
         };
-    }, [pendingCount]);
+    }, [pendingCount, overallStats]);
 
     const displayAppointments = useMemo(() => {
-        if (activeTab === DashboardTab.HISTORY) {
-            return appointments.filter(a =>
-                a.status === AppointmentStatus.COMPLETED ||
-                a.status === AppointmentStatus.REJECTED ||
-                a.status === AppointmentStatus.CANCELLED
-            );
-        }
         return appointments;
-    }, [appointments, activeTab]);
+    }, [appointments]);
 
     return (
         <ProtectedRoute allowedRoles={[UserRole.DOCTOR]}>

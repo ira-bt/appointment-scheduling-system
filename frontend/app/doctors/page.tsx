@@ -15,8 +15,10 @@ import SearchBox from '@/src/components/common/SearchBox';
 import FilterBar from '@/src/components/common/FilterBar';
 import Pagination from '@/src/components/common/Pagination';
 import SortDropdown from '@/src/components/common/SortDropdown';
+import { useAuthStore } from '@/src/store/auth.store';
 
 export default function DoctorDiscoveryPage() {
+    const { user } = useAuthStore();
     const [doctors, setDoctors] = useState<(User & { doctorProfile: DoctorProfile })[]>([]);
     const [selectedDoctor, setSelectedDoctor] = useState<(User & { doctorProfile: DoctorProfile }) | null>(null);
     const [loading, setLoading] = useState(true);
@@ -108,6 +110,13 @@ export default function DoctorDiscoveryPage() {
     useEffect(() => {
         fetchDoctors();
     }, [fetchDoctors]);
+
+    // Set initial city from user profile
+    useEffect(() => {
+        if (user?.city && !filters.city) {
+            setFilters(prev => ({ ...prev, city: user.city }));
+        }
+    }, [user, filters.city]);
 
     const handlePageChange = useCallback((newPage: number) => {
         setFilters(prev => ({ ...prev, page: newPage }));

@@ -44,5 +44,14 @@ export const appointmentService = {
             }
         });
         return response.data;
+    },
+    /**
+     * Check if patient has a conflicting appointment
+     */
+    checkConflict: async (appointmentStart: string) => {
+        const response = await apiClient.get(API.APPOINTMENTS.CHECK_CONFLICT, {
+            params: { appointmentStart }
+        });
+        return response.data;
     }
 };

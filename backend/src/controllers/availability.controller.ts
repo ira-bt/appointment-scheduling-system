@@ -93,8 +93,8 @@ export class AvailabilityController {
             const targetDate = new Date(date);
             const dayOfWeek = targetDate.getUTCDay();
 
-            // 1. Get doctor's availability for that day
-            const availability = await prisma.availability.findFirst({
+            // 1. Get all doctor's active availability for that day
+            const availabilities = await prisma.availability.findMany({
                 where: {
                     doctorId,
                     dayOfWeek,
@@ -102,7 +102,7 @@ export class AvailabilityController {
                 }
             });
 
-            if (!availability) {
+            if (!availabilities || availabilities.length === 0) {
                 res.status(200).json({
                     success: true,
                     message: 'No availability found for this day',
@@ -134,69 +134,79 @@ export class AvailabilityController {
                 }
             });
 
-            // 3. Generate all possible 30-min slots for the schedule
-            const slots: any[] = [];
-            const [startHour, startMin] = availability.startTime.split(':').map(Number);
-            const [endHour, endMin] = availability.endTime.split(':').map(Number);
-
-            const current = new Date(targetDate);
-            current.setHours(startHour, startMin, 0, 0);
-
-            const end = new Date(targetDate);
-            end.setHours(endHour, endMin, 0, 0);
-
+            // 3. Generate all possible 30-min slots across all availability periods
             const now = new Date();
             const minLeadTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-            while (current < end) {
-                const slotEnd = new Date(current);
-                slotEnd.setMinutes(current.getMinutes() + 30);
-                if (slotEnd > end) break;
+            // Use a Map to deduplicate slots by time string
+            const slotsMap = new Map<string, any>();
 
-                const timeStr = current.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+            for (const availability of availabilities) {
+                const [startHour, startMin] = availability.startTime.split(':').map(Number);
+                const [endHour, endMin] = availability.endTime.split(':').map(Number);
 
-                // Determine availability status
-                let isAvailable = true;
-                let reason: 'past' | 'booked' | 'lead_time' | null = null;
+                const current = new Date(targetDate);
+                current.setHours(startHour, startMin, 0, 0);
 
-                // 1. Check if in the past
-                if (current < now) {
-                    isAvailable = false;
-                    reason = 'past';
-                }
-                // 2. Check 24h lead time
-                else if (current < minLeadTime) {
-                    isAvailable = false;
-                    reason = 'lead_time';
-                }
-                // 3. Check if occupied
-                else {
-                    const isOccupied = existingAppointments.some(app => {
-                        const appStart = new Date(app.appointmentStart);
-                        const appEnd = new Date(appStart);
-                        appEnd.setMinutes(appStart.getMinutes() + app.durationMinutes);
-                        return (current < appEnd) && (slotEnd > appStart);
-                    });
+                const end = new Date(targetDate);
+                end.setHours(endHour, endMin, 0, 0);
 
-                    if (isOccupied) {
+                while (current < end) {
+                    const slotEnd = new Date(current);
+                    slotEnd.setMinutes(current.getMinutes() + 30);
+                    if (slotEnd > end) break;
+
+                    const timeStr = current.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+                    // Determine availability status
+                    let isAvailable = true;
+                    let reason: 'past' | 'booked' | 'lead_time' | null = null;
+
+                    // 1. Check if in the past
+                    if (current < now) {
                         isAvailable = false;
-                        reason = 'booked';
+                        reason = 'past';
                     }
+                    // 2. Check 24h lead time
+                    else if (current < minLeadTime) {
+                        isAvailable = false;
+                        reason = 'lead_time';
+                    }
+                    // 3. Check if occupied
+                    else {
+                        const isOccupied = existingAppointments.some(app => {
+                            const appStart = new Date(app.appointmentStart);
+                            const appEnd = new Date(appStart);
+                            appEnd.setMinutes(appStart.getMinutes() + app.durationMinutes);
+                            return (current < appEnd) && (slotEnd > appStart);
+                        });
+
+                        if (isOccupied) {
+                            isAvailable = false;
+                            reason = 'booked';
+                        }
+                    }
+
+                    // Only add if not already in map or if this one is available (prefer availability if overlaps)
+                    if (!slotsMap.has(timeStr) || (isAvailable && !slotsMap.get(timeStr).isAvailable)) {
+                        slotsMap.set(timeStr, {
+                            time: timeStr,
+                            isAvailable,
+                            reason
+                        });
+                    }
+
+                    current.setMinutes(current.getMinutes() + 30);
                 }
-
-                slots.push({
-                    time: timeStr,
-                    isAvailable,
-                    reason
-                });
-
-                current.setMinutes(current.getMinutes() + 30);
             }
+
+            // Convert map to array and sort by time
+            const finalSlots = Array.from(slotsMap.values()).sort((a, b) => a.time.localeCompare(b.time));
 
             res.status(200).json({
                 success: true,
                 message: 'Slots fetched successfully',
-                data: { slots },
+                data: { slots: finalSlots },
                 statusCode: 200,
             } as IApiResponse);
         } catch (error) {

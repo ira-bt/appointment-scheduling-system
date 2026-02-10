@@ -108,6 +108,7 @@ export const doctorService = {
      */
     getAppointments: async (params?: {
         status?: AppointmentStatus;
+        type?: 'upcoming' | 'past' | 'requests' | 'approved';
         page?: number;
         limit?: number;
         sortBy?: string;

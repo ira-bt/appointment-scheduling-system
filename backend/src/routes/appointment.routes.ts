@@ -21,15 +21,21 @@ router.get(
     AppointmentController.getPatientAppointments
 );
 
-/**
- * @route   POST /api/appointments
- * @desc    Create a new appointment
- * @access  Private (Patient only)
- */
 router.post(
     ROUTES.APPOINTMENTS.CREATE,
     restrictTo(Role.PATIENT),
     AppointmentController.createAppointment
+);
+
+/**
+ * @route   GET /api/appointments/check-conflict
+ * @desc    Check if patient has an overlapping appointment
+ * @access  Private (Patient only)
+ */
+router.get(
+    ROUTES.APPOINTMENTS.CHECK_CONFLICT,
+    restrictTo(Role.PATIENT),
+    AppointmentController.checkPatientConflict
 );
 
 /**

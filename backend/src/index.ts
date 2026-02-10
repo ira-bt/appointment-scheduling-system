@@ -222,6 +222,21 @@ app.listen(PORT, () => {
           console.log(`[Cleanup] Successfully auto-completed ${completedCount} appointments.`);
         }
       }
+
+      // Background Task: Clean up old/revoked refresh tokens
+      console.log('[Cleanup] Checking for expired/revoked refresh tokens...');
+      const deletedTokens = await prisma.refreshToken.deleteMany({
+        where: {
+          OR: [
+            { expiresAt: { lt: new Date() } }, // Expired
+            { isRevoked: true, createdAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } } // Revoked more than 24h ago
+          ]
+        }
+      });
+      if (deletedTokens.count > 0) {
+        console.log(`[Cleanup] Deleted ${deletedTokens.count} old refresh tokens.`);
+      }
+
     } catch (error) {
       console.error('[Cleanup] Error in background task:', error);
     }

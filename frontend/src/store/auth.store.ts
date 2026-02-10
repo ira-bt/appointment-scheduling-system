@@ -112,10 +112,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw new Error('No refresh token available');
       }
 
-      const { accessToken } = await authService.refreshToken(refreshToken);
+      const { accessToken, refreshToken: newRefreshToken } = await authService.refreshToken(refreshToken);
 
       // Update tokens
       localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+      if (newRefreshToken) {
+        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
+      }
       axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
       set({ token: accessToken });
@@ -126,9 +129,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   checkAuthStatus: async () => {
-    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    const initialToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
 
-    if (!token) {
+    if (!initialToken) {
       set({ isLoading: false, isAuthenticated: false });
       return;
     }
@@ -137,12 +140,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isLoading: true });
 
       // Set axios defaults for the verification request
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      axios.defaults.headers.common['Authorization'] = `Bearer ${initialToken}`;
 
       // Fetch user profile to verify token
       const user = await authService.getMe();
 
-      set({ user, token, isAuthenticated: true, isLoading: false });
+      // IMPORTANT: Get the latest token because it might have been refreshed during getMe()
+      const latestToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) || initialToken;
+
+      set({
+        user,
+        token: latestToken,
+        isAuthenticated: true,
+        isLoading: false
+      });
     } catch (error) {
       // If token verification fails, remove invalid tokens
       localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);

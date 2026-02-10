@@ -22,6 +22,7 @@ export default function ManageAvailability({ onClose }: { onClose: () => void })
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [conflictIndexes, setConflictIndexes] = useState<number[]>([]);
 
     React.useEffect(() => {
         const fetchAvailability = async () => {
@@ -45,7 +46,7 @@ export default function ManageAvailability({ onClose }: { onClose: () => void })
     }, []);
 
     const handleAddDay = () => {
-        if (availability.length < 7) {
+        if (availability.length < 35) {
             setAvailability([
                 ...availability,
                 { dayOfWeek: 1, startTime: '09:00', endTime: '17:00', isActive: true },
@@ -55,17 +56,61 @@ export default function ManageAvailability({ onClose }: { onClose: () => void })
 
     const handleRemoveDay = (index: number) => {
         setAvailability(availability.filter((_, i) => i !== index));
+        // Clear conflicts when removing a row
+        setConflictIndexes([]);
     };
 
     const handleChange = (index: number, field: keyof AvailabilityItem, value: AvailabilityItem[keyof AvailabilityItem]) => {
         const newAvailability = [...availability];
         newAvailability[index] = { ...newAvailability[index], [field]: value } as AvailabilityItem;
         setAvailability(newAvailability);
+        // Clear error/conflicts when user makes a change
+        setError(null);
+        setConflictIndexes([]);
+    };
+
+    const validateOverlaps = () => {
+        const activeItems = availability
+            .map((item, index) => ({ ...item, index }))
+            .filter(item => item.isActive);
+
+        for (let i = 0; i < activeItems.length; i++) {
+            for (let j = i + 1; j < activeItems.length; j++) {
+                const a = activeItems[i];
+                const b = activeItems[j];
+
+                if (a.dayOfWeek === b.dayOfWeek) {
+                    // Check for overlap
+                    // Convert to minutes for easier comparison
+                    const startA = timeToMinutes(a.startTime);
+                    const endA = timeToMinutes(a.endTime);
+                    const startB = timeToMinutes(b.startTime);
+                    const endB = timeToMinutes(b.endTime);
+
+                    if (startA < endB && startB < endA) {
+                        const dayName = DAYS.find(d => d.value === a.dayOfWeek)?.label;
+                        setError(`Selection for ${dayName} (${a.startTime}-${a.endTime}) overlaps with (${b.startTime}-${b.endTime}). Please fix this mistake.`);
+                        setConflictIndexes([a.index, b.index]);
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    };
+
+    const timeToMinutes = (time: string) => {
+        const [h, m] = time.split(':').map(Number);
+        return h * 60 + m;
     };
 
     const handleSave = async () => {
-        setLoading(true);
         setError(null);
+        setConflictIndexes([]);
+
+        if (!validateOverlaps()) return;
+
+        setLoading(true);
         try {
             await doctorService.updateAvailability(availability);
             onClose();
@@ -93,7 +138,13 @@ export default function ManageAvailability({ onClose }: { onClose: () => void })
                     <>
                         <div className="space-y-4 mb-2">
                             {availability.map((item, index) => (
-                                <div key={index} className="flex flex-wrap items-center gap-4 p-4 border border-gray-100 rounded-lg bg-gray-50 group transition-all hover:shadow-sm">
+                                <div
+                                    key={index}
+                                    className={`flex flex-wrap items-center gap-4 p-4 border rounded-lg transition-all hover:shadow-sm ${conflictIndexes.includes(index)
+                                        ? 'border-red-200 bg-red-50'
+                                        : 'border-gray-100 bg-gray-50'
+                                        }`}
+                                >
                                     <div className="flex-1 min-w-[150px]">
                                         <label className="label text-xs font-semibold text-gray-500 uppercase tracking-wider p-0 mb-1">Day</label>
                                         <select
@@ -154,8 +205,8 @@ export default function ManageAvailability({ onClose }: { onClose: () => void })
                         </div>
 
                         {error && (
-                            <div className="alert alert-error mb-6 text-sm py-3 rounded-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <div className="alert alert-error mb-6 text-sm py-3 rounded-lg flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                 <span>{error}</span>
                             </div>
                         )}
@@ -168,7 +219,7 @@ export default function ManageAvailability({ onClose }: { onClose: () => void })
                 <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                     <button
                         onClick={handleAddDay}
-                        disabled={availability.length >= 7}
+                        disabled={availability.length >= 35}
                         className="btn btn-outline btn-primary btn-sm rounded-lg w-full md:w-auto"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2">

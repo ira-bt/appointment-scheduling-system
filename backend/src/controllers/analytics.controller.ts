@@ -22,18 +22,21 @@ export class AnalyticsController {
 
             const { startDate, endDate } = req.query;
 
-            // Default to last 15 days if not provided
-            const end = endDate ? new Date(endDate as string) : new Date();
-            const start = startDate ? new Date(startDate as string) : new Date(end.getTime() - 15 * 24 * 60 * 60 * 1000);
+            // Date filtering logic
+            const dateQuery: any = {};
+            if (startDate) dateQuery.gte = new Date(startDate as string);
+            if (endDate) dateQuery.lte = new Date(endDate as string);
 
-            // 1. Fetch appointments in range
+            // If no dates provided, we don't default to 15 days here for the core fetch 
+            // but we might want to for the dailyMetrics chart.
+            // Let's check: if it's for the dashboard summary, we want OVERALL.
+            // If it's for the chart, we usually want a range.
+
+            // 1. Fetch appointments (filtered by date if provided)
             const appointments = await prisma.appointment.findMany({
                 where: {
                     doctorId,
-                    appointmentStart: {
-                        gte: start,
-                        lte: end
-                    }
+                    ...(Object.keys(dateQuery).length > 0 ? { appointmentStart: dateQuery } : {})
                 }
             });
 
@@ -63,20 +66,49 @@ export class AnalyticsController {
                 ? Number((ratings.reduce((acc, curr) => acc + curr.rating, 0) / ratings.length).toFixed(1))
                 : 0;
 
-            // 3. Daily Metrics for the chart
+            // Today's Appointments count
+            const startOfToday = new Date();
+            startOfToday.setHours(0, 0, 0, 0);
+            const endOfToday = new Date(startOfToday);
+            endOfToday.setDate(endOfToday.getDate() + 1);
+
+            const todayAppointments = await prisma.appointment.count({
+                where: {
+                    doctorId,
+                    appointmentStart: {
+                        gte: startOfToday,
+                        lt: endOfToday
+                    },
+                    status: {
+                        in: [AppointmentStatus.CONFIRMED, AppointmentStatus.COMPLETED]
+                    }
+                }
+            });
+
+            // 3. Daily Metrics for the chart (Default to last 15 days for chart if no range)
+            const chartEnd = endDate ? new Date(endDate as string) : new Date();
+            const chartStart = startDate ? new Date(startDate as string) : new Date(chartEnd.getTime() - 15 * 24 * 60 * 60 * 1000);
+
             const dailyMetricsMap = new Map<string, { date: string, appointments: number, revenue: number }>();
 
             // Initialize the map with all dates in range
-            let current = new Date(start);
-            while (current <= end) {
+            let current = new Date(chartStart);
+            current.setHours(0, 0, 0, 0);
+            const normalizedEnd = new Date(chartEnd);
+            normalizedEnd.setHours(0, 0, 0, 0);
+
+            while (current <= normalizedEnd) {
                 const dateKey = current.toISOString().split('T')[0];
                 dailyMetricsMap.set(dateKey, { date: dateKey, appointments: 0, revenue: 0 });
                 current.setDate(current.getDate() + 1);
             }
 
-            // Fill with actual data
+            // Fill with actual data (within chart range)
             appointments.forEach(app => {
-                const dateKey = app.appointmentStart.toISOString().split('T')[0];
+                const appDate = new Date(app.appointmentStart);
+                appDate.setHours(0, 0, 0, 0);
+                const dateKey = appDate.toISOString().split('T')[0];
+
                 if (dailyMetricsMap.has(dateKey)) {
                     const metric = dailyMetricsMap.get(dateKey)!;
                     metric.appointments += 1;
@@ -86,7 +118,7 @@ export class AnalyticsController {
                 }
             });
 
-            // 5. Total Patients (unique overall)
+            // 5. Total Patients
             const uniquePatients = await prisma.appointment.groupBy({
                 by: ['patientId'],
                 where: { doctorId }
@@ -102,7 +134,8 @@ export class AnalyticsController {
                         cancelledAppointments,
                         totalRevenue,
                         totalPatients: uniquePatients.length,
-                        averageRating
+                        averageRating,
+                        todayAppointments
                     },
                     dailyMetrics: Array.from(dailyMetricsMap.values())
                 },

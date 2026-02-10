@@ -28,6 +28,7 @@ export const ROUTES = {
     LIST_PATIENT: '/patient',
     LIST_DOCTOR: '/doctor',
     CREATE: '/',
+    CHECK_CONFLICT: '/check-conflict',
     UPLOAD_REPORTS: '/:id/reports',
     UPDATE_STATUS: '/:id/status',
   },
