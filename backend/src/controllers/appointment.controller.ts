@@ -678,8 +678,7 @@ export class AppointmentController {
             const { appointmentStart } = createAppointmentSchema.pick({ appointmentStart: true }).parse(req.query);
 
             const requestedStart = new Date(appointmentStart);
-            const requestedEnd = new Date(requestedStart);
-            requestedEnd.setMinutes(requestedStart.getMinutes() + 30); // 30 min duration
+            const requestedEnd = new Date(requestedStart.getTime() + 30 * 60 * 1000); // 30 min duration
 
             // Find any existing appointment for this patient that overlaps
             const conflict = await prisma.appointment.findFirst({
@@ -688,11 +687,19 @@ export class AppointmentController {
                     status: {
                         in: [AppointmentStatus.PENDING, AppointmentStatus.APPROVED, AppointmentStatus.CONFIRMED]
                     },
+                    // OVERLAP LOGIC: E_start < R_end AND E_end > R_start
+                    // Here we assume all appointments are 30 mins if not specified, 
+                    // or we check the durationMinutes field.
                     AND: [
                         { appointmentStart: { lt: requestedEnd } },
                         {
+                            // We need to check if the end of the existing appointment is after the requested start
+                            // Since we can't easily do math in Prisma 'where' for all records, 
+                            // we'll fetch potentials and filter or use a broader range and filter in JS.
+                            // However, we can approximate: if average duration is 30-60 mins, 
+                            // gt: requestedStart - 2 hours is safe.
                             appointmentStart: {
-                                gt: new Date(requestedStart.getTime() - 30 * 60 * 1000)
+                                gt: new Date(requestedStart.getTime() - 4 * 60 * 60 * 1000) // 4h buffer is very safe
                             }
                         }
                     ]
@@ -711,20 +718,26 @@ export class AppointmentController {
                 }
             });
 
+            // Filter for true overlap in memory to handle dynamic durations
+            let trueConflict = null;
             if (conflict) {
-                const conflictStart = new Date(conflict.appointmentStart);
-                const timeStr = conflictStart.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                const dateStr = conflictStart.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+                const existingStart = new Date(conflict.appointmentStart);
+                const existingEnd = new Date(existingStart.getTime() + conflict.durationMinutes * 60000);
 
+                if (existingStart < requestedEnd && existingEnd > requestedStart) {
+                    trueConflict = conflict;
+                }
+            }
+
+            if (trueConflict) {
                 res.status(200).json({
                     success: true,
                     data: {
                         hasConflict: true,
                         conflict: {
-                            status: conflict.status,
-                            time: timeStr,
-                            date: dateStr,
-                            doctorName: `Dr. ${conflict.doctor.user.firstName} ${conflict.doctor.user.lastName}`
+                            status: trueConflict.status,
+                            startTime: trueConflict.appointmentStart.toISOString(),
+                            doctorName: `Dr. ${trueConflict.doctor.user.firstName} ${trueConflict.doctor.user.lastName}`
                         }
                     },
                     statusCode: 200,

@@ -24,6 +24,18 @@ export const formatTime = (date: string | Date): string => {
 };
 
 /**
+ * Format a date object or ISO string to local time string (HH:mm)
+ */
+export const formatLocalizedTime = (date: string | Date): string => {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    return d.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+};
+
+/**
  * Format a duration between two dates in minutes
  */
 export const formatDuration = (start: string | Date, end: string | Date): string => {

@@ -146,12 +146,12 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
                             <span>Expires in: {timeLeft}</span>
                         </div>
                     )}
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row md:flex-col items-center md:items-end gap-3 w-full md:w-auto">
                         {appointment.status === AppointmentStatus.APPROVED && !isPast && !isExpired && (
                             <button
                                 onClick={handlePayment}
                                 disabled={paymentLoading}
-                                className="btn btn-sm btn-primary rounded-lg shadow-md flex items-center gap-2 min-w-[120px]"
+                                className="btn btn-sm btn-primary rounded-lg shadow-md flex items-center justify-center gap-2 w-full sm:w-auto min-w-[140px]"
                             >
                                 {paymentLoading ? (
                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -164,13 +164,13 @@ export default function AppointmentCard({ appointment }: AppointmentCardProps) {
                         {appointment.status === AppointmentStatus.COMPLETED && !appointment.rating && (
                             <button
                                 onClick={() => setShowReviewModal(true)}
-                                className="btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border-none rounded-lg font-bold"
+                                className="btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border-none rounded-lg font-bold w-full sm:w-auto"
                             >
                                 Give Review
                             </button>
                         )}
                         {appointment.status === AppointmentStatus.COMPLETED && appointment.rating && (
-                            <div className="flex items-center gap-1 text-yellow-500 bg-yellow-50 px-2 py-1 rounded-md border border-yellow-100">
+                            <div className="flex items-center gap-1 text-yellow-500 bg-yellow-50 px-3 py-1.5 rounded-lg border border-yellow-100 w-full sm:w-auto justify-center">
                                 <Star className="w-3.5 h-3.5 fill-yellow-500" />
                                 <span className="text-xs font-bold">{appointment.rating.rating}</span>
                             </div>

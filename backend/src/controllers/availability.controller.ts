@@ -14,6 +14,7 @@ export const availabilitySchema = z.array(z.object({
 
 export const slotsQuerySchema = z.object({
     date: z.string().regex(REGEX.DATE), // YYYY-MM-DD
+    timezoneOffset: z.string().optional().transform(v => v ? parseInt(v, 10) : 0), // minutes (e.g. -330 for +05:30)
 });
 
 export class AvailabilityController {
@@ -88,9 +89,9 @@ export class AvailabilityController {
     static async getAvailableSlots(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const doctorId = req.params.id as string;
-            const { date } = slotsQuerySchema.parse(req.query);
+            const { date, timezoneOffset } = slotsQuerySchema.parse(req.query);
 
-            const targetDate = new Date(date);
+            const targetDate = new Date(`${date}T00:00:00Z`);
             const dayOfWeek = targetDate.getUTCDay();
 
             // 1. Get all doctor's active availability for that day
@@ -145,18 +146,23 @@ export class AvailabilityController {
                 const [startHour, startMin] = availability.startTime.split(':').map(Number);
                 const [endHour, endMin] = availability.endTime.split(':').map(Number);
 
-                const current = new Date(targetDate);
-                current.setHours(startHour, startMin, 0, 0);
+                // Create dates based on the target date. 
+                // We treat the availability time as "Wall Clock" time at the target date.
+                // To get the absolute UTC moment, we apply the user's timezone offset.
+                const startWallClock = new Date(`${date}T${availability.startTime}:00Z`);
+                const current = new Date(startWallClock.getTime() + (timezoneOffset || 0) * 60 * 1000);
 
-                const end = new Date(targetDate);
-                end.setHours(endHour, endMin, 0, 0);
+                const endWallClock = new Date(`${date}T${availability.endTime}:00Z`);
+                const end = new Date(endWallClock.getTime() + (timezoneOffset || 0) * 60 * 1000);
 
-                while (current < end) {
-                    const slotEnd = new Date(current);
-                    slotEnd.setMinutes(current.getMinutes() + 30);
-                    if (slotEnd > end) break;
+                let wallClock = new Date(startWallClock.getTime());
+                while (wallClock < endWallClock) {
+                    const current = new Date(wallClock.getTime() + (timezoneOffset || 0) * 60 * 1000);
+                    const slotEnd = new Date(current.getTime() + 30 * 60 * 1000);
 
-                    const timeStr = current.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    const timeStr = wallClock.getUTCHours().toString().padStart(2, '0') + ':' +
+                        wallClock.getUTCMinutes().toString().padStart(2, '0');
+                    const isoValue = current.toISOString();
 
                     // Determine availability status
                     let isAvailable = true;
@@ -176,8 +182,7 @@ export class AvailabilityController {
                     else {
                         const isOccupied = existingAppointments.some(app => {
                             const appStart = new Date(app.appointmentStart);
-                            const appEnd = new Date(appStart);
-                            appEnd.setMinutes(appStart.getMinutes() + app.durationMinutes);
+                            const appEnd = new Date(appStart.getTime() + app.durationMinutes * 60000);
                             return (current < appEnd) && (slotEnd > appStart);
                         });
 
@@ -187,16 +192,17 @@ export class AvailabilityController {
                         }
                     }
 
-                    // Only add if not already in map or if this one is available (prefer availability if overlaps)
+                    // Only add if not already in map or if this one is available
                     if (!slotsMap.has(timeStr) || (isAvailable && !slotsMap.get(timeStr).isAvailable)) {
                         slotsMap.set(timeStr, {
                             time: timeStr,
+                            value: isoValue,
                             isAvailable,
                             reason
                         });
                     }
 
-                    current.setMinutes(current.getMinutes() + 30);
+                    wallClock.setUTCMilliseconds(wallClock.getUTCMilliseconds() + 30 * 60 * 1000);
                 }
             }
 

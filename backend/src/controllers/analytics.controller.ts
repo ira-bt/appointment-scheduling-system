@@ -68,9 +68,9 @@ export class AnalyticsController {
 
             // Today's Appointments count
             const startOfToday = new Date();
-            startOfToday.setHours(0, 0, 0, 0);
-            const endOfToday = new Date(startOfToday);
-            endOfToday.setDate(endOfToday.getDate() + 1);
+            startOfToday.setUTCHours(0, 0, 0, 0);
+            const endOfToday = new Date(startOfToday.getTime());
+            endOfToday.setUTCDate(endOfToday.getUTCDate() + 1);
 
             const todayAppointments = await prisma.appointment.count({
                 where: {
@@ -93,20 +93,20 @@ export class AnalyticsController {
 
             // Initialize the map with all dates in range
             let current = new Date(chartStart);
-            current.setHours(0, 0, 0, 0);
+            current.setUTCHours(0, 0, 0, 0);
             const normalizedEnd = new Date(chartEnd);
-            normalizedEnd.setHours(0, 0, 0, 0);
+            normalizedEnd.setUTCHours(0, 0, 0, 0);
 
             while (current <= normalizedEnd) {
                 const dateKey = current.toISOString().split('T')[0];
                 dailyMetricsMap.set(dateKey, { date: dateKey, appointments: 0, revenue: 0 });
-                current.setDate(current.getDate() + 1);
+                current.setUTCDate(current.getUTCDate() + 1);
             }
 
             // Fill with actual data (within chart range)
             appointments.forEach(app => {
                 const appDate = new Date(app.appointmentStart);
-                appDate.setHours(0, 0, 0, 0);
+                appDate.setUTCHours(0, 0, 0, 0);
                 const dateKey = appDate.toISOString().split('T')[0];
 
                 if (dailyMetricsMap.has(dateKey)) {

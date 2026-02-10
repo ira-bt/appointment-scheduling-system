@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import ProtectedRoute from '@/src/components/auth/ProtectedRoute';
 import { UserRole, User, DoctorProfile } from '@/src/types/user.types';
 import { APP_ROUTES } from '@/src/constants/app-routes';
+import { formatDate, formatLocalizedTime } from '@/src/utils/date';
 import { doctorService } from '@/src/services/doctor.service';
 import BookingCalendar from '@/src/components/booking/BookingCalendar';
 import SlotPicker from '@/src/components/booking/SlotPicker';
@@ -21,12 +22,13 @@ function BookingPageContent() {
     const [doctor, setDoctor] = useState<(User & { doctorProfile: DoctorProfile }) | null>(null);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+    const [selectedSlotISO, setSelectedSlotISO] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [bookingLoading, setBookingLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [bookedAppointmentId, setBookedAppointmentId] = useState<string | null>(null);
 
-    const [conflictInfo, setConflictInfo] = useState<{ hasConflict: boolean; conflict?: { status: string; time: string; date: string; doctorName: string } } | null>(null);
+    const [conflictInfo, setConflictInfo] = useState<{ hasConflict: boolean; conflict?: { status: string; startTime: string; doctorName: string } } | null>(null);
     const [showConflictConfirm, setShowConflictConfirm] = useState(false);
 
     useEffect(() => {
@@ -51,17 +53,13 @@ function BookingPageContent() {
 
     useEffect(() => {
         const checkConflict = async () => {
-            if (!selectedDate || !selectedSlot) {
+            if (!selectedSlotISO) {
                 setConflictInfo(null);
                 return;
             }
 
             try {
-                const [hours, minutes] = selectedSlot.split(':');
-                const appointmentDate = new Date(selectedDate);
-                appointmentDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-
-                const response = await appointmentService.checkConflict(appointmentDate.toISOString());
+                const response = await appointmentService.checkConflict(selectedSlotISO);
                 setConflictInfo(response.data);
             } catch (err) {
                 console.error('Conflict check failed:', err);
@@ -69,20 +67,16 @@ function BookingPageContent() {
         };
 
         checkConflict();
-    }, [selectedDate, selectedSlot]);
+    }, [selectedSlotISO]);
 
     const performBooking = async () => {
-        if (!doctorId || !selectedDate || !selectedSlot) return;
+        if (!doctorId || !selectedSlotISO) return;
 
         setBookingLoading(true);
         try {
-            const [hours, minutes] = selectedSlot.split(':');
-            const appointmentDate = new Date(selectedDate);
-            appointmentDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-
             const response = await appointmentService.createAppointment({
                 doctorId,
-                appointmentStart: appointmentDate.toISOString()
+                appointmentStart: selectedSlotISO
             });
 
             setBookedAppointmentId(response.data.id);
@@ -169,14 +163,16 @@ function BookingPageContent() {
                 </button>
 
                 {/* Header */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 flex items-center gap-6">
-                    <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shrink-0">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+                    <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-white text-3xl font-black shrink-0 shadow-lg shadow-blue-100 ring-4 ring-white">
                         {doctor.firstName[0]}{doctor.lastName[0]}
                     </div>
-                    <div>
+                    <div className="flex-1">
                         <h1 className="text-2xl font-bold text-gray-800">Book Appointment</h1>
-                        <p className="text-gray-500">with Dr. {doctor.firstName} {doctor.lastName}</p>
-                        <p className="text-blue-600 font-medium text-sm mt-1">{doctor.doctorProfile.specialty}</p>
+                        <p className="text-gray-500 font-medium mt-1">with Dr. {doctor.firstName} {doctor.lastName}</p>
+                        <div className="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-full mt-3 uppercase tracking-wider">
+                            {doctor.doctorProfile.specialty}
+                        </div>
                     </div>
                 </div>
 
@@ -192,6 +188,7 @@ function BookingPageContent() {
                             onDateSelect={(date) => {
                                 setSelectedDate(date);
                                 setSelectedSlot(null);
+                                setSelectedSlotISO(null);
                             }}
                         />
                     </div>
@@ -206,7 +203,10 @@ function BookingPageContent() {
                             <SlotPicker
                                 doctorId={doctor.id}
                                 selectedDate={selectedDate}
-                                onSlotSelect={setSelectedSlot}
+                                onSlotSelect={(time, iso) => {
+                                    setSelectedSlot(time);
+                                    setSelectedSlotISO(iso);
+                                }}
                                 selectedSlot={selectedSlot}
                             />
                         ) : (
@@ -221,33 +221,33 @@ function BookingPageContent() {
                 {selectedDate && selectedSlot && (
                     <div className="mt-12 bg-white p-6 rounded-2xl shadow-lg border border-blue-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                            <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
                                 <div>
-                                    <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">You&apos;re booking for</p>
-                                    <p className="text-gray-800 font-bold">
-                                        {selectedDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} at {selectedSlot}
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">You&apos;re booking for</p>
+                                    <p className="text-slate-800 font-bold text-base sm:text-lg">
+                                        {selectedDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} at {selectedSlot}
                                     </p>
                                 </div>
                             </div>
 
                             {/* Conflict Warning */}
                             {conflictInfo?.hasConflict && (
-                                <div className="flex-1 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 animate-in fade-in zoom-in duration-300">
+                                <div className="flex-1 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in zoom-in duration-300 max-w-lg">
                                     <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-amber-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 text-amber-600">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-amber-800 text-sm font-bold">Heads up! You have a conflict</p>
-                                        <p className="text-amber-700 text-xs mt-0.5">
-                                            You already have a <span className="font-bold underline uppercase">{conflictInfo.conflict?.status}</span> appointment
-                                            with <span className="font-bold">{conflictInfo.conflict?.doctorName}</span> on this day at <span className="font-bold">{conflictInfo.conflict?.time}</span>.
+                                        <p className="text-amber-800 text-[10px] font-black uppercase tracking-widest leading-none mb-1">Schedule Conflict</p>
+                                        <p className="text-amber-700 text-xs">
+                                            You have a <span className="font-bold underline">{conflictInfo.conflict?.status}</span> appointment
+                                            with <span className="font-bold">Dr. {conflictInfo.conflict?.doctorName}</span> at <span className="font-bold">{formatLocalizedTime(conflictInfo.conflict?.startTime || '')}</span>.
                                         </p>
                                     </div>
                                 </div>
@@ -256,14 +256,16 @@ function BookingPageContent() {
                             <button
                                 onClick={handleBooking}
                                 disabled={bookingLoading}
-                                className="btn btn-primary btn-lg px-12 rounded-2xl shadow-xl shadow-blue-100 w-full md:w-auto min-w-[200px] flex items-center justify-center gap-2"
+                                className="btn btn-primary btn-lg px-10 rounded-2xl shadow-xl shadow-blue-100 w-full sm:w-auto min-w-[200px] h-14 border-none transition-all hover:-translate-y-0.5 active:scale-95"
                             >
                                 {bookingLoading ? (
                                     <>
                                         <Loader2 className="w-5 h-5 animate-spin" />
-                                        <span>Booking Now...</span>
+                                        <span className="font-bold">Booking...</span>
                                     </>
-                                ) : 'Confirm Booking'}
+                                ) : (
+                                    <span className="font-bold uppercase tracking-wider text-sm">Confirm Booking</span>
+                                )}
                             </button>
                         </div>
                     </div>
@@ -289,7 +291,7 @@ function BookingPageContent() {
                                 <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Existing Appointment</p>
                                 <div className="space-y-1">
                                     <p className="text-slate-800 font-bold">Dr. {conflictInfo.conflict?.doctorName}</p>
-                                    <p className="text-slate-600 text-sm">{conflictInfo.conflict?.date} at {conflictInfo.conflict?.time}</p>
+                                    <p className="text-slate-600 text-sm">{formatDate(conflictInfo.conflict?.startTime || '')} at {formatLocalizedTime(conflictInfo.conflict?.startTime || '')}</p>
                                     <p className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 uppercase">
                                         {conflictInfo.conflict?.status}
                                     </p>

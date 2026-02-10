@@ -126,23 +126,24 @@ export default function AnalyticsTab() {
         <div className="space-y-4 animate-in fade-in duration-700">
             {/* Range Selector */}
             <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-4">
-                    <div className="flex bg-gray-50 p-1 rounded-2xl">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+                    <div className="flex bg-gray-50 p-1 rounded-2xl w-full sm:w-auto overflow-x-auto no-scrollbar">
                         {[
-                            { label: '7 Days', value: '7' },
-                            { label: '15 Days', value: '15' },
-                            { label: '30 Days', value: '30' },
-                            { label: 'Custom', value: 'custom' },
+                            { label: '7D', mobileLabel: '7D', value: '7' },
+                            { label: '15 Days', mobileLabel: '15D', value: '15' },
+                            { label: '30 Days', mobileLabel: '30D', value: '30' },
+                            { label: 'Custom', mobileLabel: 'Custom', value: 'custom' },
                         ].map((range) => (
                             <button
                                 key={range.value}
                                 onClick={() => setDateRange(range.value)}
-                                className={`px-6 py-2 text-xs font-black rounded-xl transition-all ${dateRange === range.value
+                                className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 text-[10px] sm:text-xs font-black rounded-xl transition-all whitespace-nowrap ${dateRange === range.value
                                     ? 'bg-white text-blue-600 shadow-sm border border-gray-100'
                                     : 'text-gray-400 hover:text-gray-600'
                                     }`}
                             >
-                                {range.label}
+                                <span className="hidden sm:inline">{range.label}</span>
+                                <span className="sm:hidden">{range.mobileLabel}</span>
                             </button>
                         ))}
                     </div>
@@ -156,33 +157,35 @@ export default function AnalyticsTab() {
                 </div>
 
                 {dateRange === 'custom' && (
-                    <div className="flex items-center gap-3 animate-in slide-in-from-right-4 duration-300">
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-gray-400 uppercase ml-2 mb-1">From</span>
-                            <input
-                                type="date"
-                                value={customDates.start}
-                                max={today}
-                                onChange={(e) => setCustomDates(prev => ({ ...prev, start: e.target.value }))}
-                                className="bg-gray-50 border-none rounded-xl text-xs font-bold p-2 focus:ring-2 focus:ring-blue-100 transition-all"
-                            />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-gray-400 uppercase ml-2 mb-1">To</span>
-                            <input
-                                type="date"
-                                value={customDates.end}
-                                max={today}
-                                onChange={(e) => setCustomDates(prev => ({ ...prev, end: e.target.value }))}
-                                className="bg-gray-50 border-none rounded-xl text-xs font-bold p-2 focus:ring-2 focus:ring-blue-100 transition-all"
-                            />
+                    <div className="flex flex-col sm:flex-row items-end gap-3 w-full sm:w-auto animate-in slide-in-from-top-2 sm:slide-in-from-right-4 duration-300">
+                        <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-gray-400 uppercase ml-2 mb-1">From</span>
+                                <input
+                                    type="date"
+                                    value={customDates.start}
+                                    max={today}
+                                    onChange={(e) => setCustomDates(prev => ({ ...prev, start: e.target.value }))}
+                                    className="bg-gray-50 border-none rounded-xl text-xs font-bold p-2 focus:ring-2 focus:ring-blue-100 transition-all w-full"
+                                />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-gray-400 uppercase ml-2 mb-1">To</span>
+                                <input
+                                    type="date"
+                                    value={customDates.end}
+                                    max={today}
+                                    onChange={(e) => setCustomDates(prev => ({ ...prev, end: e.target.value }))}
+                                    className="bg-gray-50 border-none rounded-xl text-xs font-bold p-2 focus:ring-2 focus:ring-blue-100 transition-all w-full"
+                                />
+                            </div>
                         </div>
                         <button
                             onClick={handleApplyCustomRange}
                             disabled={isRefreshing}
-                            className="mt-5 px-4 py-2 bg-blue-600 text-white text-xs font-black rounded-xl shadow-lg shadow-blue-100 hover:bg-blue-700 disabled:opacity-50 transition-all"
+                            className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white text-xs font-black rounded-xl shadow-lg shadow-blue-100 hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center min-h-[38px]"
                         >
-                            {isRefreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+                            {isRefreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply Range'}
                         </button>
                     </div>
                 )}
@@ -227,9 +230,9 @@ export default function AnalyticsTab() {
                         </div>
                     </div>
 
-                    <div className="h-[250px] w-full">
+                    <div className="h-[200px] sm:h-[250px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={chartData}>
+                            <LineChart data={chartData} margin={{ left: -20, right: 10, top: 10, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
@@ -241,26 +244,28 @@ export default function AnalyticsTab() {
                                     dataKey="displayDate"
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fontSize: 12, fill: '#94a3b8' }}
+                                    tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
                                     dy={10}
+                                    interval="preserveStartEnd"
+                                    minTickGap={10}
                                 />
                                 <YAxis
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fontSize: 12, fill: '#94a3b8' }}
-                                    tickFormatter={(val) => `₹${val}`}
+                                    tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
+                                    tickFormatter={(val) => `₹${val >= 1000 ? (val / 1000).toFixed(1) + 'k' : val}`}
                                 />
                                 <Tooltip
-                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', fontSize: '12px' }}
                                     formatter={(value: number | string | undefined) => [`₹${(Number(value) || 0).toLocaleString()}`, 'Revenue']}
                                 />
                                 <Line
                                     type="monotone"
                                     dataKey="revenue"
                                     stroke="#10b981"
-                                    strokeWidth={4}
-                                    dot={{ r: 4, strokeWidth: 2, fill: '#fff' }}
-                                    activeDot={{ r: 6, strokeWidth: 0 }}
+                                    strokeWidth={3}
+                                    dot={{ r: 3, strokeWidth: 2, fill: '#fff' }}
+                                    activeDot={{ r: 5, strokeWidth: 0 }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
@@ -270,19 +275,25 @@ export default function AnalyticsTab() {
                 {/* Growth / Appointment Distribution */}
                 <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col">
                     <h3 className="text-lg font-bold text-slate-900 mb-4 font-primary">Appointment Volume</h3>
-                    <div className="flex-1 h-[250px]">
+                    <div className="h-[200px] sm:h-[250px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData}>
+                            <BarChart data={chartData} margin={{ left: -20, right: 10, top: 10, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis
                                     dataKey="displayDate"
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fontSize: 10, fill: '#94a3b8' }}
+                                    tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
+                                    interval="preserveStartEnd"
+                                    minTickGap={5}
                                 />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
+                                />
                                 <Tooltip
-                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', fontSize: '12px' }}
                                 />
                                 <Bar dataKey="appointments" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                             </BarChart>

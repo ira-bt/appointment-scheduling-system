@@ -85,10 +85,10 @@ export default function HomePage() {
             )}
           </div>
 
-          <div className="md:w-1/2 flex justify-center">
+          <div className="md:w-1/2 flex justify-center mt-12 md:mt-0">
             <div className="relative">
-              <div className="bg-blue-600 rounded-2xl p-8 w-80 h-80 flex items-center justify-center">
-                <div className="bg-white rounded-xl p-6 shadow-xl w-64 h-64 flex flex-col items-center justify-center text-center">
+              <div className="bg-blue-600 rounded-3xl p-6 sm:p-8 w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center transition-transform hover:scale-105 duration-500">
+                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-2xl w-52 h-52 sm:w-64 sm:h-64 flex flex-col items-center justify-center text-center">
                   <div className="bg-blue-100 p-3 rounded-full mb-4">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -98,12 +98,14 @@ export default function HomePage() {
                   <p className="text-sm text-gray-600">Book appointments in seconds</p>
                 </div>
               </div>
-              <div className="absolute -top-4 -right-4 bg-green-100 text-green-800 rounded-xl p-4 shadow-lg">
+              <div className="absolute -top-6 -right-4 sm:-right-8 bg-green-500 text-white rounded-2xl p-3 sm:p-4 shadow-xl animate-bounce-slow">
                 <div className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-sm font-medium">Trusted by 10k+ users</span>
+                  <div className="bg-white/20 p-1 rounded-full mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-xs sm:text-sm font-bold">Trusted by 10k+ users</span>
                 </div>
               </div>
             </div>

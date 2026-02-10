@@ -51,6 +51,7 @@ export interface AvailabilityUpdateResponse {
 
 export interface Slot {
     time: string;
+    value: string;
     isAvailable: boolean;
     reason?: 'past' | 'booked' | 'lead_time' | null;
 }
@@ -100,7 +101,10 @@ export const doctorService = {
      * Get available slots for a doctor on a specific date
      */
     getSlots: async (doctorId: string, date: string): Promise<SlotsResponse> => {
-        const response = await apiClient.get(API.DOCTORS.SLOTS(doctorId), { params: { date } });
+        const timezoneOffset = new Date().getTimezoneOffset();
+        const response = await apiClient.get(API.DOCTORS.SLOTS(doctorId), {
+            params: { date, timezoneOffset: timezoneOffset.toString() }
+        });
         return response.data;
     },
     /**

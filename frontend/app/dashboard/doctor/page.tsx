@@ -12,7 +12,7 @@ import DoctorAppointmentCard from '@/src/components/doctor/DoctorAppointmentCard
 import { toast } from 'react-hot-toast';
 import { getErrorMessage } from '@/src/utils/api-error';
 import { formatBloodType } from '@/src/utils/healthcare';
-import { Loader2, Users, CalendarDays, Clock, IndianRupee, CreditCard, BarChart3, ChevronDown, User, LogOut } from 'lucide-react';
+import { Loader2, Users, CalendarDays, Clock, IndianRupee, CreditCard, BarChart3, ChevronDown, User, LogOut, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { APP_ROUTES } from '@/src/constants/app-routes';
 import AnalyticsTab from '@/src/components/analytics/AnalyticsTab';
@@ -31,6 +31,7 @@ export default function DoctorDashboard() {
     const [processingAction, setProcessingAction] = useState<{ id: string, status: AppointmentStatus } | null>(null);
     const [pendingCount, setPendingCount] = useState(0);
     const [overallStats, setOverallStats] = useState<AnalyticsSummary | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Pagination state
     const [page, setPage] = useState(1);
@@ -113,6 +114,7 @@ export default function DoctorDashboard() {
     const handleTabChange = useCallback((tab: DashboardTab) => {
         setActiveTab(tab);
         setPage(1);
+        setIsSidebarOpen(false); // Close sidebar on mobile after tab change
         if (tab === DashboardTab.REQUESTS || tab === DashboardTab.SCHEDULED) {
             setSortBy('appointmentStart');
             setSortOrder('asc');
@@ -163,12 +165,30 @@ export default function DoctorDashboard() {
     return (
         <ProtectedRoute allowedRoles={[UserRole.DOCTOR]}>
             <div className="min-h-screen bg-gray-50">
+                {/* Sidebar Overlay for Mobile */}
+                {isSidebarOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-all"
+                        onClick={() => setIsSidebarOpen(false)}
+                    />
+                )}
+
                 {/* Sidebar Drawer */}
                 <div className="flex h-screen overflow-hidden">
                     {/* Sidebar */}
-                    <aside className="w-64 bg-white border-r border-gray-100 flex flex-col shrink-0">
-                        <div className="p-6 border-b border-gray-50">
+                    <aside className={`
+                        fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-100 flex flex-col shrink-0 transition-transform duration-300 ease-in-out
+                        lg:translate-x-0 lg:static lg:w-64
+                        ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
+                    `}>
+                        <div className="p-6 border-b border-gray-50 flex items-center justify-between">
                             <span className="text-xl font-black text-blue-600 tracking-tight">MediScheduler</span>
+                            <button
+                                onClick={() => setIsSidebarOpen(false)}
+                                className="lg:hidden p-2 text-gray-500 hover:bg-gray-50 rounded-lg"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
                         </div>
 
                         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -255,15 +275,21 @@ export default function DoctorDashboard() {
                     </aside>
 
                     {/* Main Content Area */}
-                    <main className="flex-1 overflow-y-auto bg-gray-50">
+                    <main className="flex-1 overflow-y-auto bg-gray-50 w-full">
                         {/* Top Header */}
-                        <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
-                            <div>
-                                <h2 className="text-xl font-black text-gray-900 capitalize">
+                        <header className="bg-white border-b border-gray-100 px-4 lg:px-8 py-3 lg:py-4 flex items-center justify-between sticky top-0 z-30">
+                            <div className="flex items-center gap-3 lg: gap-4">
+                                <button
+                                    onClick={() => setIsSidebarOpen(true)}
+                                    className="lg:hidden p-2 text-gray-500 hover:bg-gray-50 rounded-lg active:scale-95 transition-transform"
+                                >
+                                    <Menu className="w-6 h-6" />
+                                </button>
+                                <h2 className="text-base lg:text-xl font-black text-gray-900 capitalize truncate max-w-[150px] sm:max-w-none">
                                     {activeTab === DashboardTab.ANALYTICS ? 'Practice Analytics' : `${activeTab} Management`}
                                 </h2>
                             </div>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-3 lg:gap-4">
                                 <div className="text-right hidden sm:block">
                                     <p className="text-sm font-black text-gray-900">Dr. {user?.firstName} {user?.lastName}</p>
                                     <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Medical Professional</p>
@@ -272,46 +298,46 @@ export default function DoctorDashboard() {
                                     src={user?.profileImage}
                                     firstName={user?.firstName}
                                     variant="square"
-                                    className="bg-blue-600 text-white shadow-lg shadow-blue-100 font-black"
+                                    className="w-9 h-9 lg:w-10 lg:h-10 bg-blue-600 text-white shadow-lg shadow-blue-100 font-black text-xs"
                                 />
                             </div>
                         </header>
 
                         <div className="p-6 max-w-6xl mx-auto">
                             {/* Stats Summary - Simple and Industry Grade */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 group hover:shadow-md transition-all">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                                <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 group hover:shadow-md transition-all">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
-                                            <Clock className="w-5 h-5" />
+                                        <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                                            <Clock className="w-6 h-6" />
                                         </div>
                                         <div>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Today</p>
-                                            <p className="text-xl font-black text-gray-900">{stats.todayCount} Sessions</p>
+                                            <p className="text-2xl font-black text-gray-900 leading-tight">{stats.todayCount} Sessions</p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 group hover:shadow-md transition-all">
+                                <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 group hover:shadow-md transition-all">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600">
-                                            <CalendarDays className="w-5 h-5" />
+                                        <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform">
+                                            <CalendarDays className="w-6 h-6" />
                                         </div>
                                         <div>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pending</p>
-                                            <p className="text-xl font-black text-gray-900">{stats.pending} Requests</p>
+                                            <p className="text-2xl font-black text-gray-900 leading-tight">{stats.pending} Requests</p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 group hover:shadow-md transition-all">
+                                <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 group hover:shadow-md transition-all sm:col-span-2 lg:col-span-1">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                                            <IndianRupee className="w-5 h-5" />
+                                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+                                            <IndianRupee className="w-6 h-6" />
                                         </div>
                                         <div>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Earnings</p>
-                                            <p className="text-xl font-black text-gray-900">₹{stats.earnings.toLocaleString()}</p>
+                                            <p className="text-2xl font-black text-gray-900 leading-tight">₹{stats.earnings.toLocaleString()}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -320,11 +346,11 @@ export default function DoctorDashboard() {
 
                             {/* List Header */}
                             {activeTab !== DashboardTab.ANALYTICS && (
-                                <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                                    <h3 className="text-lg font-bold text-gray-800">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 bg-white p-4 lg:p-5 rounded-3xl shadow-sm border border-gray-100">
+                                    <h3 className="text-base lg:text-lg font-black text-gray-900">
                                         Showing {totalAppointments} {activeTab.toLowerCase()}
                                     </h3>
-                                    <div className="flex items-center gap-4">
+                                    <div className="w-full sm:w-auto">
                                         <SortDropdown
                                             options={sortOptions}
                                             currentValue={`${sortBy}-${sortOrder}`}
