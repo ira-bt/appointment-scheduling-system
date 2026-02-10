@@ -3,6 +3,7 @@ import { z } from 'zod';
 import prisma from '../config/prisma';
 import { IApiResponse } from '../interfaces/response.interface';
 import { AppointmentStatus, Prisma } from '@prisma/client';
+import { getISTDay, getISTTimeString, formatToISTDate, formatToISTTime } from '../utils/date.util';
 
 // Types for appointment includes
 type AppointmentWithDoctor = Prisma.AppointmentGetPayload<{
@@ -135,8 +136,8 @@ export class AppointmentController {
             }
 
             // 2. Check if doctor has availability for this day/time (Outside transaction)
-            const dayOfWeek = requestedStart.getDay();
-            const timeString = requestedStart.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const dayOfWeek = getISTDay(requestedStart);
+            const timeString = getISTTimeString(requestedStart);
 
             const availability = await prisma.availability.findFirst({
                 where: {
@@ -211,8 +212,8 @@ export class AppointmentController {
 
             // 5. Send Email Notification (Non-blocking)
             const emailService = require('../utils/email.util').default;
-            const timeStr = requestedStart.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-            const dateStr = requestedStart.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            const timeStr = formatToISTTime(requestedStart);
+            const dateStr = formatToISTDate(requestedStart);
 
             const appointmentWithDoctor = result as AppointmentWithDoctor;
             emailService.sendBookingConfirmation(
@@ -637,8 +638,8 @@ export class AppointmentController {
 
             // 3. Trigger Email Notification (Asynchronous)
             const emailService = require('../utils/email.util').default;
-            const timeStr = new Date(appointment.appointmentStart).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-            const dateStr = new Date(appointment.appointmentStart).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            const timeStr = formatToISTTime(new Date(appointment.appointmentStart));
+            const dateStr = formatToISTDate(new Date(appointment.appointmentStart));
 
             if (status === AppointmentStatus.APPROVED) {
                 // Update approval email text to match the new 20-min initiation window

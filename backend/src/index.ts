@@ -17,6 +17,7 @@ import appointmentRoutes from './routes/appointment.routes';
 import paymentRoutes from './routes/payment.routes';
 import analyticsRoutes from './routes/analytics.routes';
 import ratingRoutes from './routes/rating.routes';
+import { formatToISTDate, formatToISTTime } from './utils/date.util';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -112,7 +113,7 @@ app.listen(Number(PORT), '0.0.0.0', () => {
           });
 
           // Send expiry email
-          const dateStr = new Date(app.appointmentStart).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+          const dateStr = formatToISTDate(new Date(app.appointmentStart));
           await emailService.sendPaymentWindowExpired(
             app.patient.user.email,
             app.patient.user.firstName,
@@ -146,7 +147,7 @@ app.listen(Number(PORT), '0.0.0.0', () => {
           });
 
           // Send auto-rejection email
-          const dateStr = new Date(app.appointmentStart).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+          const dateStr = formatToISTDate(new Date(app.appointmentStart));
           await emailService.sendAppointmentRejection(
             app.patient.user.email,
             app.patient.user.firstName,
@@ -182,12 +183,7 @@ app.listen(Number(PORT), '0.0.0.0', () => {
           // Since we don't have user timezone here, we use a generic format or UTC.
           // Better: Use a relative time or just the time part.
           const appStart = new Date(app.appointmentStart);
-          const timeStr = appStart.toLocaleTimeString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-            // REMOVED explicit timezone here, will use server's locale (likely UTC in production)
-          });
+          const timeStr = formatToISTTime(appStart);
 
           await emailService.sendAppointmentReminder(
             app.patient.user.email,
