@@ -60,7 +60,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                                 value={selectedFilters[group.name] || ''}
                                 onChange={(e) => onFilterChange(group.name, e.target.value)}
                             >
-                                <option value="">All {group.label}s</option>
+                                <option value="">All {group.label.endsWith('y') ? group.label.slice(0, -1) + 'ies' : group.label + 's'}</option>
                                 {group.options.map((opt) => (
                                     <option key={opt.value} value={opt.value}>
                                         {opt.label}

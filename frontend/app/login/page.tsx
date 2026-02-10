@@ -46,29 +46,34 @@ export default function LoginPage() {
 
     // Validate the field and update errors
     const error = validateField(name, value);
-    setErrors(prev => ({
-      ...prev,
+    const newErrors = {
+      ...errors,
       [name]: error
-    }));
+    };
+    setErrors(newErrors);
 
-    // Check if form is valid after each change
-    setTimeout(() => {
-      validateForm();
-    }, 0);
+    // Update form data
+    const newData = {
+      ...formData,
+      [name]: value
+    };
+
+    // Check if form is valid after each change using latest data
+    validateForm(newData);
   };
 
-  const validateForm = () => {
+  const validateForm = (data = formData) => {
     const newErrors: Record<string, string> = {};
 
     // Validate email
-    if (!formData.email.trim()) {
+    if (!data.email.trim()) {
       newErrors.email = 'Email is required';
-    } else if (!REGEX.EMAIL.test(formData.email)) {
+    } else if (!REGEX.EMAIL.test(data.email)) {
       newErrors.email = 'Email is invalid';
     }
 
     // Validate password
-    if (!formData.password) {
+    if (!data.password) {
       newErrors.password = 'Password is required';
     }
     // else if (formData.password.length < 8) {
@@ -79,7 +84,7 @@ export default function LoginPage() {
     // }
 
     setErrors(newErrors);
-    const isValid = Object.keys(newErrors).length === 0 && !!formData.email && !!formData.password;
+    const isValid = Object.keys(newErrors).length === 0 && !!data.email && !!data.password;
     setIsFormValid(isValid);
     return isValid;
   };
