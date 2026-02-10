@@ -3,7 +3,7 @@ import { z } from 'zod';
 import prisma from '../config/prisma';
 import { IApiResponse } from '../interfaces/response.interface';
 import { AppointmentStatus, Prisma } from '@prisma/client';
-import { getISTDay, getISTTimeString, formatToISTDate, formatToISTTime } from '../utils/date.util';
+import { getISTDay, getISTTimeString, formatToISTDate, formatToISTTime, getISTDateKey } from '../utils/date.util';
 
 // Types for appointment includes
 type AppointmentWithDoctor = Prisma.AppointmentGetPayload<{
@@ -160,11 +160,10 @@ export class AppointmentController {
 
             // Execute in transaction to prevent race conditions (Critical section only)
             const result = await prisma.$transaction(async (tx) => {
-                // 3. Robust overlap check
-                const startOfDay = new Date(requestedStart);
-                startOfDay.setHours(0, 0, 0, 0);
-                const endOfDay = new Date(requestedStart);
-                endOfDay.setHours(23, 59, 59, 999);
+                // 3. Robust overlap check (Fetch appointments for the same IST day)
+                const requestedISTKey = getISTDateKey(requestedStart);
+                const startOfDay = new Date(`${requestedISTKey}T00:00:00.000+05:30`);
+                const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
 
                 const todaysAppointments = await tx.appointment.findMany({
                     where: {
