@@ -6,6 +6,7 @@ import emailService from '../utils/email.util';
 import { AppointmentStatus, PaymentStatus } from '@prisma/client';
 import { IApiResponse } from '../interfaces/response.interface';
 import { FRONTEND_ROUTES } from '../constants/routes';
+import { formatToISTDate, formatToISTTime } from '../utils/date.util';
 
 export class PaymentController {
     /**
@@ -167,16 +168,8 @@ export class PaymentController {
                     // Send confirmation emails
                     const doctor = updatedAppointment.doctor;
                     const patient = updatedAppointment.patient;
-                    const appointmentDate = updatedAppointment.appointmentStart.toLocaleDateString('en-IN', {
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric'
-                    });
-                    const appointmentTime = updatedAppointment.appointmentStart.toLocaleTimeString('en-IN', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                    });
+                    const appointmentDate = formatToISTDate(updatedAppointment.appointmentStart);
+                    const appointmentTime = formatToISTTime(updatedAppointment.appointmentStart);
 
                     // 1. Email to Patient
                     emailService.sendPaymentSuccessPatient(
