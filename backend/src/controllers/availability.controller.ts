@@ -113,10 +113,10 @@ export class AvailabilityController {
                 return;
             }
 
-            // 2. Get existing appointments for that doctor on that date (using UTC boundaries)
-            const startOfDay = new Date(date);
-            const endOfDay = new Date(date);
-            endOfDay.setUTCHours(23, 59, 59, 999);
+            // 2. Get existing appointments for that doctor on that date (using local boundaries)
+            const startOfDay = new Date(`${date}T00:00:00.000Z`);
+            startOfDay.setTime(startOfDay.getTime() + (timezoneOffset || 0) * 60 * 1000);
+            const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
 
             const existingAppointments = await prisma.appointment.findMany({
                 where: {

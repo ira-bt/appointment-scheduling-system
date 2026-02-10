@@ -45,3 +45,13 @@ export const formatToISTTime = (date: Date): string => {
         timeZone: 'Asia/Kolkata'
     });
 };
+/**
+ * Returns date string in "YYYY-MM-DD" format for a given date in IST.
+ */
+export const getISTDateKey = (date: Date): string => {
+    const istDate = new Date(date.getTime() + (5 * 60 + 30) * 60000);
+    const year = istDate.getUTCFullYear();
+    const month = (istDate.getUTCMonth() + 1).toString().padStart(2, '0');
+    const day = istDate.getUTCDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};

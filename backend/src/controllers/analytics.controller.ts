@@ -3,6 +3,7 @@ import prisma from '../config/prisma';
 import { IApiResponse } from '../interfaces/response.interface';
 import { AppointmentStatus, PaymentStatus } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { getISTDateKey } from '../utils/date.util';
 
 export class AnalyticsController {
     /**
@@ -66,11 +67,10 @@ export class AnalyticsController {
                 ? Number((ratings.reduce((acc, curr) => acc + curr.rating, 0) / ratings.length).toFixed(1))
                 : 0;
 
-            // Today's Appointments count
-            const startOfToday = new Date();
-            startOfToday.setUTCHours(0, 0, 0, 0);
-            const endOfToday = new Date(startOfToday.getTime());
-            endOfToday.setUTCDate(endOfToday.getUTCDate() + 1);
+            // Today's Appointments count (IST boundaries)
+            const todayKey = getISTDateKey(new Date());
+            const startOfToday = new Date(`${todayKey}T00:00:00.000+05:30`);
+            const endOfToday = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000);
 
             const todayAppointments = await prisma.appointment.count({
                 where: {
@@ -93,21 +93,17 @@ export class AnalyticsController {
 
             // Initialize the map with all dates in range
             let current = new Date(chartStart);
-            current.setUTCHours(0, 0, 0, 0);
             const normalizedEnd = new Date(chartEnd);
-            normalizedEnd.setUTCHours(0, 0, 0, 0);
 
             while (current <= normalizedEnd) {
-                const dateKey = current.toISOString().split('T')[0];
+                const dateKey = getISTDateKey(current);
                 dailyMetricsMap.set(dateKey, { date: dateKey, appointments: 0, revenue: 0 });
-                current.setUTCDate(current.getUTCDate() + 1);
+                current.setTime(current.getTime() + 24 * 60 * 60 * 1000);
             }
 
             // Fill with actual data (within chart range)
             appointments.forEach(app => {
-                const appDate = new Date(app.appointmentStart);
-                appDate.setUTCHours(0, 0, 0, 0);
-                const dateKey = appDate.toISOString().split('T')[0];
+                const dateKey = getISTDateKey(new Date(app.appointmentStart));
 
                 if (dailyMetricsMap.has(dateKey)) {
                     const metric = dailyMetricsMap.get(dateKey)!;
