@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MediScheduler - Frontend
 
-## Getting Started
+The frontend for the Patient Appointment Booking System, a modern React application built with Next.js and Tailwind CSS.
 
-First, run the development server:
+## 🎨 Design & UI
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Framework**: Next.js 16 (App Router)
+- **Styling**: Tailwind CSS & DaisyUI
+- **Icons**: Lucide React
+- **Themes**: Modern, high-contrast, mobile-responsive design
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ⚡ Core Technologies
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Language**: TypeScript
+- **State Management**: Zustand
+- **HTTP Client**: Axios with Token Refresh interceptors
+- **Visuals**: Recharts for analytics dashboard
+- **Toast**: React Hot Toast
+- **Dates**: Date-fns
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠️ Getting Started
 
-## Learn More
+### Installation
 
-To learn more about Next.js, take a look at the following resources:
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. Setup environment variables:
+   Create a `.env.local` file in the root directory:
+   ```env
+   NEXT_PUBLIC_BACKEND_URL="http://localhost:5000"
+   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="your_stripe_pub_key"
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. Start development server:
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+## ✨ Key Features
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Auth System**: Login/Register with Patient and Doctor roles.
+- **Doctor Discovery**: Advanced filtering by city and specialty.
+- **Booking Flow**: Real-time slot availability and collision detection.
+- **Dashboards**: 
+  - **Patient**: Booking history, reports upload, and profile management.
+  - **Doctor**: Appointment management, analytics, and availability settings.
+- **Payment Integration**: Secure Stripe checkout for consultation fees.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📱 Mobile Responsiveness
+
+The application is audited for small screens (down to 320px) with dedicated mobile drawers and space-saving UI components.
