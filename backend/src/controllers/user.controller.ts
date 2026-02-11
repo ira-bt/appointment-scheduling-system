@@ -110,8 +110,8 @@ export class UserController {
         return;
       }
 
-      // Send welcome email (asynchronous, don't block response)
-      emailService.sendWelcomeEmail(result.email, result.firstName).catch(err => {
+      // Send welcome email (Await to ensure Vercel doesn't kill the process)
+      await emailService.sendWelcomeEmail(result.email, result.firstName).catch(err => {
         console.error('Failed to send welcome email:', err);
       });
 
@@ -378,8 +378,8 @@ export class UserController {
         },
       });
 
-      // Send email
-      emailService.sendPasswordResetEmail(email, user.firstName, resetToken).catch(err => {
+      // Send email (Await for reliability)
+      await emailService.sendPasswordResetEmail(email, user.firstName, resetToken).catch(err => {
         console.error('Failed to send password reset email:', err);
       });
 

@@ -215,7 +215,7 @@ export class AppointmentController {
             const dateStr = formatToISTDate(requestedStart);
 
             const appointmentWithDoctor = result as AppointmentWithDoctor;
-            emailService.sendBookingConfirmation(
+            await emailService.sendBookingConfirmation(
                 appointmentWithDoctor.doctor.user.email,
                 appointmentWithDoctor.doctor.user.lastName,
                 req.user.firstName + ' ' + req.user.lastName,
@@ -642,7 +642,7 @@ export class AppointmentController {
 
             if (status === AppointmentStatus.APPROVED) {
                 // Update approval email text to match the new 20-min initiation window
-                emailService.sendAppointmentApproval(
+                await emailService.sendAppointmentApproval(
                     appointment.patient.user.email,
                     appointment.patient.user.firstName,
                     dateStr,
@@ -650,7 +650,7 @@ export class AppointmentController {
                 ).catch((err: unknown) => console.error('Approval email failed:', err));
             }
             else if (status === AppointmentStatus.REJECTED) {
-                emailService.sendAppointmentRejection(
+                await emailService.sendAppointmentRejection(
                     appointment.patient.user.email,
                     appointment.patient.user.firstName,
                     dateStr
