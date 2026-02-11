@@ -172,7 +172,7 @@ export class PaymentController {
                     const appointmentTime = formatToISTTime(updatedAppointment.appointmentStart);
 
                     // 1. Email to Patient
-                    emailService.sendPaymentSuccessPatient(
+                    await emailService.sendPaymentSuccessPatient(
                         patient.user.email,
                         patient.user.firstName,
                         `${doctor.user.firstName} ${doctor.user.lastName}`,
@@ -182,7 +182,7 @@ export class PaymentController {
                     ).catch(err => console.error('Error sending patient payment email:', err));
 
                     // 2. Email to Doctor (Payment Confirmation + Scheduled Notification)
-                    emailService.sendPaymentSuccessDoctor(
+                    await emailService.sendPaymentSuccessDoctor(
                         doctor.user.email,
                         `${doctor.user.firstName} ${doctor.user.lastName}`,
                         `${patient.user.firstName} ${patient.user.lastName}`,

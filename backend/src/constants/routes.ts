@@ -46,6 +46,10 @@ export const ROUTES = {
     CREATE: '/',
     DOCTOR: '/doctor/:doctorId',
   },
+  CRON: {
+    BASE: '/cron',
+    EXECUTE: '/',
+  },
 };
 
 export const FRONTEND_ROUTES = {
